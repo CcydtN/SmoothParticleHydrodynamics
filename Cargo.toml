@@ -1,0 +1,24 @@
+[package]
+name = "sph_simulation"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "2d_sim"
+path = "src/2d_sim.rs"
+
+[[bin]]
+name = "bouncing_particle"
+path = "src/bouncing_particle.rs"
+
+[[bin]]
+name = "pressure_2d"
+path = "src/pressure_2d.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+macroquad = "0.4"
+uom = "0.35.0"
+rayon = "*"
+itertools = "0.12.1"
