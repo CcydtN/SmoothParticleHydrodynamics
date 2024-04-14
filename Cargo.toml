@@ -7,14 +7,6 @@ edition = "2021"
 name = "2d_sim"
 path = "src/2d_sim.rs"
 
-[[bin]]
-name = "bouncing_particle"
-path = "src/bouncing_particle.rs"
-
-[[bin]]
-name = "pressure_2d"
-path = "src/pressure_2d.rs"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
