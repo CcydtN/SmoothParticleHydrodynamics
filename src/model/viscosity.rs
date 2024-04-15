@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use crate::kernel::common::Kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
-struct Viscosity<T: Kernel> {
+pub struct Viscosity<T: Kernel> {
     viscosity_constant: f32,
     mass: f32,
     kernel: T,
@@ -17,7 +17,7 @@ impl<T: Kernel> Viscosity<T> {
             kernel,
         }
     }
-    pub fn compute_force(
+    pub fn compute_accelration(
         &self,
         grid: &SpatialHashGrid,
         position: &Vec<Vec3>,
@@ -31,7 +31,7 @@ impl<T: Kernel> Viscosity<T> {
                 sum += self.mass * (velocity[j] - velocity[i]) / density[j]
                     * self.kernel.lapacian(position[i].distance(position[j]));
             }
-            force.push(sum * self.viscosity_constant);
+            force.push(sum * self.viscosity_constant / density[i]);
         }
         force
     }
@@ -58,7 +58,7 @@ mod tests {
         let velocity = vec![vec3(-1., -1., -1.), vec3(0., 0., 0.), vec3(1., 1., 1.)];
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let viscosity = viscoity_model.compute_force(&grid, &position, &velocity, &density);
+        let viscosity = viscoity_model.compute_accelration(&grid, &position, &velocity, &density);
 
         assert_eq!(viscosity[0], -viscosity[2]);
         assert_eq!(viscosity[1], Vec3::ZERO);

@@ -2,20 +2,29 @@ mod kernel;
 mod model;
 mod util_3d;
 
-use itertools::iproduct;
+use itertools::{iproduct, izip};
 use kernel::spiky::Spiky;
 use macroquad::prelude::*;
-use model::{density::Density, pressure::Pressure};
-use uom::si::{f32::MassDensity, mass_density};
+use model::{density::Density, pressure::Pressure, viscosity::Viscosity};
+use uom::si::{
+    dynamic_viscosity,
+    f32::{DynamicViscosity, MassDensity},
+    mass_density,
+};
 use util_3d::spatial_hash_grid::SpatialHashGrid;
 
 struct Material {
     density: MassDensity,
+    viscosity: DynamicViscosity,
 }
 
 impl Material {
     fn get_density(&self) -> f32 {
         self.density.get::<mass_density::kilogram_per_cubic_meter>()
+    }
+
+    fn get_viscosity(&self) -> f32 {
+        self.viscosity.get::<dynamic_viscosity::pascal_second>()
     }
 }
 
@@ -24,10 +33,12 @@ async fn main() {
     // Constant for water
     let water = Material {
         density: MassDensity::new::<mass_density::kilogram_per_cubic_meter>(1000.),
+        viscosity: DynamicViscosity::new::<dynamic_viscosity::micropascal_second>(0.89), // at 25 degree C
     };
 
     let rest_density = water.get_density();
     let pressure_constant = 0.0001;
+    let viscosity_constant = water.get_viscosity();
 
     let mass = 1. / 1000.; //1 gram or 0.001 kg
     let particle_per_side = 10i32;
@@ -53,27 +64,21 @@ async fn main() {
     let kernel = Spiky::new(kernel_radius);
     let density_model = Density::new(kernel, mass);
     let pressure_model = Pressure::new(pressure_constant, rest_density, mass, kernel);
+    let viscoity_model = Viscosity::new(viscosity_constant, mass, kernel);
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    let time_step = 1. / 60.;
+    let time_step = 1. / 100.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let pressure = pressure_model.compute(&grid, &position, &density);
+        let pressure_acc = pressure_model.compute_accelraction(&grid, &position, &density);
+        let viscosity_acc =
+            viscoity_model.compute_accelration(&grid, &position, &velocity, &density);
 
-        // println!("{:?}", &pressure[0..10]);
-
-        let acceleration = pressure
-            .into_iter()
-            .zip(density.iter())
-            .map(|(p, &rho)| p / rho)
-            .collect::<Vec<_>>();
-
-        velocity
-            .iter_mut()
-            .zip(acceleration.iter())
-            .for_each(|(v, &a)| *v += a * time_step);
+        for (v, pressure, viscosity) in izip!(&mut velocity, pressure_acc, viscosity_acc) {
+            *v += (pressure + viscosity) * time_step;
+        }
 
         position
             .iter_mut()

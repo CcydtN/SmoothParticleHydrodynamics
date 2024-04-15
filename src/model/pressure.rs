@@ -19,7 +19,7 @@ impl<T: Kernel> Pressure<T> {
         }
     }
 
-    pub fn compute(
+    pub fn compute_accelraction(
         &self,
         grid: &SpatialHashGrid,
         position: &Vec<Vec3>,
@@ -42,7 +42,7 @@ impl<T: Kernel> Pressure<T> {
                 // direction
                 tmp += -pressure * (position[i] - position[j]).normalize();
             }
-            pressure.push(tmp);
+            pressure.push(tmp / density[i]);
         }
         pressure
     }
@@ -68,7 +68,7 @@ mod tests {
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let pressure = pressure_model.compute(&grid, &position, &density);
+        let pressure = pressure_model.compute_accelraction(&grid, &position, &density);
 
         assert_eq!(pressure[0], -pressure[2]);
         assert_eq!(pressure[1], Vec3::ZERO);
@@ -91,7 +91,7 @@ mod tests {
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let pressure = pressure_model.compute(&grid, &position, &density);
+        let pressure = pressure_model.compute_accelraction(&grid, &position, &density);
 
         assert_eq!(pressure[0], -pressure[2]);
         assert_eq!(pressure[1], Vec3::ZERO);
