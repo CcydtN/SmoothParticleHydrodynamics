@@ -13,9 +13,12 @@ use uom::si::{
 };
 use util_3d::spatial_hash_grid::SpatialHashGrid;
 
+use crate::model::surface_tension::SurfaceTension;
+
 struct Material {
     density: MassDensity,
     viscosity: DynamicViscosity,
+    surface_tension: f32,
 }
 
 impl Material {
@@ -26,6 +29,10 @@ impl Material {
     fn get_viscosity(&self) -> f32 {
         self.viscosity.get::<dynamic_viscosity::pascal_second>()
     }
+
+    fn get_surface_tension(&self) -> f32 {
+        self.surface_tension
+    }
 }
 
 #[macroquad::main("simulation")]
@@ -34,11 +41,13 @@ async fn main() {
     let water = Material {
         density: MassDensity::new::<mass_density::kilogram_per_cubic_meter>(1000.),
         viscosity: DynamicViscosity::new::<dynamic_viscosity::micropascal_second>(0.89), // at 25 degree C
+        surface_tension: 72.53 / 1000.,
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 0.0001;
+    let pressure_constant = 0.001;
     let viscosity_constant = water.get_viscosity();
+    let surface_tension_coefficient = water.get_surface_tension();
 
     let mass = 1. / 1000.; //1 gram or 0.001 kg
     let particle_per_side = 10i32;
@@ -65,6 +74,7 @@ async fn main() {
     let density_model = Density::new(kernel, mass);
     let pressure_model = Pressure::new(pressure_constant, rest_density, mass, kernel);
     let viscoity_model = Viscosity::new(viscosity_constant, mass, kernel);
+    let surface_tension_model = SurfaceTension::new(surface_tension_coefficient, mass, kernel);
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
     let time_step = 1. / 100.;
@@ -75,9 +85,17 @@ async fn main() {
         let pressure_acc = pressure_model.compute_accelraction(&grid, &position, &density);
         let viscosity_acc =
             viscoity_model.compute_accelration(&grid, &position, &velocity, &density);
+        let surface_tension_acc =
+            surface_tension_model.compute_accelration(&grid, &position, &density);
 
-        for (v, pressure, viscosity) in izip!(&mut velocity, pressure_acc, viscosity_acc) {
-            *v += (pressure + viscosity) * time_step;
+        let a = (0, 1);
+        for (v, pressure, viscosity, surface_tension) in izip!(
+            &mut velocity,
+            pressure_acc,
+            viscosity_acc,
+            surface_tension_acc
+        ) {
+            *v += (pressure + viscosity + surface_tension) * time_step;
         }
 
         position

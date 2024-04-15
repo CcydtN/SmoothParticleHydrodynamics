@@ -33,6 +33,7 @@ impl<T: Kernel> Viscosity<T> {
             }
             force.push(sum * self.viscosity_constant / density[i]);
         }
+        force.iter().for_each(|p| assert!(!p.is_nan()));
         force
     }
 }

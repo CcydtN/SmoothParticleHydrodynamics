@@ -44,6 +44,7 @@ impl<T: Kernel> Pressure<T> {
             }
             pressure.push(tmp / density[i]);
         }
+        pressure.iter().for_each(|p| assert!(!p.is_nan()));
         pressure
     }
 }

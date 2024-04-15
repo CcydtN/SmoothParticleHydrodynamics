@@ -15,7 +15,7 @@ impl Spiky {
 
 impl Kernel for Spiky {
     fn function(&self, r: f32) -> f32 {
-        assert!(r >= 0.0);
+        assert!(r >= 0.0, "value of r: {}", r);
         if r >= self.h {
             return 0.;
         }
