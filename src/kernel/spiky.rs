@@ -15,6 +15,7 @@ impl Spiky {
 
 impl Kernel for Spiky {
     fn function(&self, r: f32) -> f32 {
+        assert!(r >= 0.0);
         if r >= self.h {
             return 0.;
         }
@@ -23,6 +24,7 @@ impl Kernel for Spiky {
     }
 
     fn gradient(&self, r: f32) -> f32 {
+        assert!(r >= 0.0);
         if r >= self.h {
             return 0.;
         }
@@ -30,7 +32,12 @@ impl Kernel for Spiky {
         constant * (self.h - r).powi(2)
     }
 
-    fn lapacian(&self, _r: f32) -> f32 {
-        todo!()
+    fn lapacian(&self, r: f32) -> f32 {
+        assert!(r >= 0.0);
+        if r >= self.h {
+            return 0.;
+        }
+        let constant = 90. / (PI * self.h.powi(6));
+        constant * (self.h - r).powi(2)
     }
 }
