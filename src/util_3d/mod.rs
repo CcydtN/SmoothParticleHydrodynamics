@@ -1,1 +1,1 @@
-mod spatial_hash_grid;
+pub mod spatial_hash_grid;
