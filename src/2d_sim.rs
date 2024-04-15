@@ -16,10 +16,7 @@ use macroquad::{
     window::{clear_background, next_frame},
 };
 
-use uom::si::{
-    areal_mass_density, diffusion_coefficient::square_centimeter_per_second, dynamic_viscosity,
-    f32::*, length, mass,
-};
+use uom::si::{areal_mass_density, dynamic_viscosity, f32::*, length, mass};
 use util_2d::spike_kernel::{
     smoothing_kernel, smoothing_kernel_gradient, smoothing_kernel_laplacian,
 };
@@ -37,7 +34,7 @@ fn calculate_density(
     lookup_grid: &HashGrid,
     kernel_radius: f32,
 ) -> Vec<f32> {
-    let get_density = |(i, target)| {
+    let get_density = |(_i, target)| {
         lookup_grid
             .lookup(target)
             .iter()
@@ -132,11 +129,11 @@ async fn main() {
     let height = height.get::<length::meter>();
     let particle_mass = particle_mass.get::<mass::kilogram>();
     let rest_density = density.get::<areal_mass_density::kilogram_per_square_meter>();
-    let viscosity = viscosity.get::<dynamic_viscosity::poise>();
+    let _viscosity = viscosity.get::<dynamic_viscosity::poise>();
     println!("width: +/- {} unit.", width / 2.);
     println!("height: +/- {} unit.", height / 2.);
 
-    let random_pos = || {
+    let _random_pos = || {
         vec2(
             rand::gen_range(-0.5 * width, 0.5 * width),
             rand::gen_range(-0.5 * height, 0.5 * height),
@@ -171,7 +168,7 @@ async fn main() {
         let camera = get_camera(DISPLAY_UNIT);
         set_camera(&camera);
         let mouse_screen = Vec2::from_array(input::mouse_position().into());
-        let mouse = camera.screen_to_world(mouse_screen);
+        let _mouse = camera.screen_to_world(mouse_screen);
 
         // Update value
         let pred = position

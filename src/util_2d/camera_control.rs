@@ -1,5 +1,5 @@
 use macroquad::{
-    camera::{set_camera, Camera2D},
+    camera::Camera2D,
     window::{screen_height, screen_width},
 };
 

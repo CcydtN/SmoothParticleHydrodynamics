@@ -30,7 +30,7 @@ impl Kernel for Spiky {
         constant * (self.h - r).powi(2)
     }
 
-    fn lapacian(&self, r: f32) -> f32 {
+    fn lapacian(&self, _r: f32) -> f32 {
         todo!()
     }
 }

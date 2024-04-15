@@ -1,8 +1,4 @@
-use macroquad::{
-    color::{BLACK, LIGHTGRAY},
-    math::Vec2,
-    shapes::draw_line,
-};
+use macroquad::{color::LIGHTGRAY, math::Vec2, shapes::draw_line};
 
 #[derive(Debug, Default)]
 pub struct Boundary {
