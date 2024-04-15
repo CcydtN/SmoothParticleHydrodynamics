@@ -1,2 +1,2 @@
-mod density;
-mod pressure;
+pub mod density;
+pub mod pressure;
