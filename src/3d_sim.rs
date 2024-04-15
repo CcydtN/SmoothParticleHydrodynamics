@@ -69,14 +69,19 @@ async fn main() {
         );
     }
 
-    let kernel = kernel::Spiky::new(kernel_radius);
-    let density_model = Density::new(kernel, mass);
-    let pressure_model = Pressure::new(pressure_constant, rest_density, mass, kernel);
-    let viscoity_model = Viscosity::new(viscosity_constant, mass, kernel);
-    let surface_tension_model = SurfaceTension::new(surface_tension_coefficient, mass, kernel);
+    let poly6_kernel = kernel::Poly6::new(kernel_radius);
+    let spiky_kernel = kernel::Spiky::new(kernel_radius);
+    let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
+
+    let density_model = Density::new(poly6_kernel, mass);
+    let pressure_model = Pressure::new(pressure_constant, rest_density, mass, spiky_kernel);
+    let viscoity_model = Viscosity::new(viscosity_constant, mass, viscosity_kernel);
+    let surface_tension_model =
+        SurfaceTension::new(surface_tension_coefficient, mass, poly6_kernel);
+
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    let time_step = 1. / 100.;
+    let time_step = 1. / 1000.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);

@@ -28,6 +28,9 @@ impl<T: kernel::Kernel> Viscosity<T> {
         for i in 0..position.len() {
             let mut sum = Vec3::ZERO;
             for &j in grid.lookup(&position[i]) {
+                if i == j {
+                    continue;
+                }
                 sum += self.mass * (velocity[j] - velocity[i]) / density[j]
                     * self.kernel.lapacian(position[i].distance(position[j]));
             }
@@ -46,7 +49,7 @@ mod tests {
     #[test]
     fn force_direction() {
         let h = 5.;
-        let kernel = kernel::Spiky::new(h);
+        let kernel = kernel::Viscosity::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);

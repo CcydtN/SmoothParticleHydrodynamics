@@ -32,25 +32,21 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
                     continue;
                 }
                 let r = position[i].distance(position[j]);
-                let dir = (position[i] - position[j]).normalize_or_zero();
+                let dir = (position[i] - position[j]).normalize();
                 if dir == Vec3::ZERO {
                     continue;
                 }
                 color_field_gradient += self.mass * self.kernel.gradient(r) / density[j] * dir;
                 color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
             }
-            if color_field_gradient == Vec3::ZERO {
+            let n = color_field_gradient.distance(Vec3::ZERO);
+            if n == 0.0 {
                 accelration.push(Vec3::ZERO);
                 continue;
             }
-            let kappa = -color_field_lapacian / color_field_gradient.distance(Vec3::ZERO);
-            if kappa.is_nan() {
-                accelration.push(Vec3::ZERO);
-                continue;
-            }
-            accelration.push(
-                -kappa * color_field_gradient * self.surface_tension_coeffecient / density[i],
-            );
+            let n_dir = color_field_gradient.normalize();
+            let kappa = -color_field_lapacian / n;
+            accelration.push(-self.surface_tension_coeffecient * kappa * n * n_dir / density[i]);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
@@ -65,7 +61,7 @@ mod tests {
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = kernel::Spiky::new(h);
+        let kernel = kernel::Poly6::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
