@@ -1,15 +1,16 @@
 use macroquad::prelude::*;
 
-use crate::{kernel::common::Kernel, util_3d::spatial_hash_grid::SpatialHashGrid};
+use crate::kernel;
+use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
-pub struct Pressure<T: Kernel> {
+pub struct Pressure<T: kernel::Kernel> {
     k: f32,
     rest_density: f32,
     mass: f32,
     kernel: T,
 }
 
-impl<T: Kernel> Pressure<T> {
+impl<T: kernel::Kernel> Pressure<T> {
     pub fn new(k: f32, rest_density: f32, mass: f32, kernel: T) -> Self {
         Self {
             k,
@@ -52,14 +53,14 @@ impl<T: Kernel> Pressure<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kernel::spiky::Spiky;
+    use crate::kernel;
     use crate::model::density::Density;
 
     // density > rest_density
     #[test]
     fn pressure_repulsion_test() {
         let h = 5.;
-        let kernel = Spiky::new(h);
+        let kernel = kernel::Spiky::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
@@ -82,7 +83,7 @@ mod tests {
     #[test]
     fn pressure_attraction_test() {
         let h = 5.;
-        let kernel = Spiky::new(h);
+        let kernel = kernel::Spiky::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);

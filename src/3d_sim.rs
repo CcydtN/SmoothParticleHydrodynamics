@@ -3,7 +3,6 @@ mod model;
 mod util_3d;
 
 use itertools::{iproduct, izip};
-use kernel::spiky::Spiky;
 use macroquad::prelude::*;
 use model::{density::Density, pressure::Pressure, viscosity::Viscosity};
 use uom::si::{
@@ -45,7 +44,7 @@ async fn main() {
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 0.001;
+    let pressure_constant = 0.0001;
     let viscosity_constant = water.get_viscosity();
     let surface_tension_coefficient = water.get_surface_tension();
 
@@ -70,7 +69,7 @@ async fn main() {
         );
     }
 
-    let kernel = Spiky::new(kernel_radius);
+    let kernel = kernel::Spiky::new(kernel_radius);
     let density_model = Density::new(kernel, mass);
     let pressure_model = Pressure::new(pressure_constant, rest_density, mass, kernel);
     let viscoity_model = Viscosity::new(viscosity_constant, mass, kernel);
@@ -88,7 +87,6 @@ async fn main() {
         let surface_tension_acc =
             surface_tension_model.compute_accelration(&grid, &position, &density);
 
-        let a = (0, 1);
         for (v, pressure, viscosity, surface_tension) in izip!(
             &mut velocity,
             pressure_acc,

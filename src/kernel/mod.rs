@@ -1,2 +1,5 @@
-pub mod common;
-pub mod spiky;
+mod common;
+mod spiky;
+
+pub use common::Kernel;
+pub use spiky::Spiky;

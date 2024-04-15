@@ -1,15 +1,15 @@
 use macroquad::prelude::*;
 
-use crate::kernel::common::Kernel;
+use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
-pub struct Viscosity<T: Kernel> {
+pub struct Viscosity<T: kernel::Kernel> {
     viscosity_constant: f32,
     mass: f32,
     kernel: T,
 }
 
-impl<T: Kernel> Viscosity<T> {
+impl<T: kernel::Kernel> Viscosity<T> {
     pub fn new(viscosity_constant: f32, mass: f32, kernel: T) -> Self {
         Self {
             viscosity_constant,
@@ -40,15 +40,13 @@ impl<T: Kernel> Viscosity<T> {
 
 #[cfg(test)]
 mod tests {
-    use uom::si::f32::Velocity;
-
     use super::*;
-    use crate::{kernel::spiky::Spiky, model::density::Density};
+    use crate::model::density::Density;
 
     #[test]
     fn force_direction() {
         let h = 5.;
-        let kernel = Spiky::new(h);
+        let kernel = kernel::Spiky::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);

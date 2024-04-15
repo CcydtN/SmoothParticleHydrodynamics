@@ -1,14 +1,14 @@
-use crate::kernel::common::Kernel;
+use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 use macroquad::prelude::*;
 
 #[derive(Debug, Default)]
-pub(crate) struct Density<T: Kernel> {
+pub(crate) struct Density<T: kernel::Kernel> {
     kernel: T,
     mass: f32,
 }
 
-impl<T: Kernel> Density<T> {
+impl<T: kernel::Kernel> Density<T> {
     pub fn new(kernel: T, mass: f32) -> Self {
         Self { kernel, mass }
     }

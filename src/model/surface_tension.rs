@@ -1,15 +1,15 @@
 use macroquad::prelude::*;
 
-use crate::kernel::common::Kernel;
+use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
-pub struct SurfaceTension<T: Kernel> {
+pub struct SurfaceTension<T: kernel::Kernel> {
     surface_tension_coeffecient: f32,
     mass: f32,
     kernel: T,
 }
 
-impl<T: Kernel> SurfaceTension<T> {
+impl<T: kernel::Kernel> SurfaceTension<T> {
     pub fn new(surface_tension_coeffecient: f32, mass: f32, kernel: T) -> Self {
         Self {
             surface_tension_coeffecient,
@@ -48,7 +48,9 @@ impl<T: Kernel> SurfaceTension<T> {
                 accelration.push(Vec3::ZERO);
                 continue;
             }
-            accelration.push(-kappa * color_field_gradient / density[i]);
+            accelration.push(
+                -kappa * color_field_gradient * self.surface_tension_coeffecient / density[i],
+            );
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
@@ -57,15 +59,13 @@ impl<T: Kernel> SurfaceTension<T> {
 
 #[cfg(test)]
 mod tests {
-    use uom::si::f32::Velocity;
-
     use super::*;
-    use crate::{kernel::spiky::Spiky, model::density::Density};
+    use crate::model::density::Density;
 
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = Spiky::new(h);
+        let kernel = kernel::Spiky::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
