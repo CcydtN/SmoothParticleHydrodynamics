@@ -1,7 +1,9 @@
 extern crate uom;
-mod util;
+mod util_2d;
 
-use crate::util::{boundary::Boundary, camera_control::get_camera, neighborhood_search::HashGrid};
+use crate::util_2d::{
+    boundary::Boundary, camera_control::get_camera, neighborhood_search::HashGrid,
+};
 
 use macroquad::{
     camera::set_camera,
@@ -18,7 +20,9 @@ use uom::si::{
     areal_mass_density, diffusion_coefficient::square_centimeter_per_second, dynamic_viscosity,
     f32::*, length, mass,
 };
-use util::spike_kernel::{smoothing_kernel, smoothing_kernel_gradient, smoothing_kernel_laplacian};
+use util_2d::spike_kernel::{
+    smoothing_kernel, smoothing_kernel_gradient, smoothing_kernel_laplacian,
+};
 
 // Showing at least n unit on screen anytime
 // 1.0 mean it will show -1/+1
