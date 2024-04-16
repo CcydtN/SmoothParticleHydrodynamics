@@ -5,11 +5,13 @@ use crate::kernel::common::Kernel;
 #[derive(Debug, Clone, Copy)]
 pub struct Viscosity {
     h: f32,
+    volume: f32,
 }
 
 impl Viscosity {
     pub fn new(h: f32) -> Self {
-        Self { h }
+        let volume = 8. * PI * h * h / 5.;
+        Self { h, volume }
     }
 }
 
@@ -19,9 +21,8 @@ impl Kernel for Viscosity {
         if r > self.h {
             return 0.;
         }
-        let constant = 15. / (2. * PI * self.h.powi(3));
-        constant
-            * (-r.powi(3) / 2. * self.h.powi(3) + (r / self.h).powi(2) + (self.h / (2. * r)) - 1.)
+        (-r.powi(3) / 2. * self.h.powi(3) + (r / self.h).powi(2) + (self.h / (2. * r)) - 1.)
+            / self.volume
     }
 
     fn gradient(&self, r: f32) -> f32 {
@@ -29,8 +30,8 @@ impl Kernel for Viscosity {
         if r > self.h {
             return 0.;
         }
-        let constant = 15. / (4. * PI * self.h.powi(6));
-        constant * (-self.h.powi(4) + 4. * self.h * r.powi(3) - 3. * r.powi(4)) / r.powi(2)
+        (-self.h.powi(4) + 4. * self.h * r.powi(3) - 3. * r.powi(4))
+            / (r.powi(2) * self.h.powi(3) * 2. * self.volume)
     }
 
     fn lapacian(&self, r: f32) -> f32 {
@@ -38,7 +39,6 @@ impl Kernel for Viscosity {
         if r > self.h {
             return 0.;
         }
-        let constant = 15. / (2. * PI * self.h.powi(6));
-        constant * (self.h.powi(4) + 2. * self.h * r.powi(3) - 3. * r.powi(4)) / r.powi(3)
+        (self.h / r.powi(3) + 2. / self.h.powi(2) - 3. * r / self.h.powi(3)) / self.volume
     }
 }

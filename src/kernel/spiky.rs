@@ -5,11 +5,13 @@ use crate::kernel::common::Kernel;
 #[derive(Debug, Clone, Copy)]
 pub struct Spiky {
     h: f32,
+    volume: f32,
 }
 
 impl Spiky {
     pub fn new(h: f32) -> Self {
-        Self { h }
+        let volume = h.powi(5) * PI / 10.;
+        Self { h, volume }
     }
 }
 
@@ -19,8 +21,7 @@ impl Kernel for Spiky {
         if r > self.h {
             return 0.;
         }
-        let constant = 15. / (PI * self.h.powi(6));
-        constant * (self.h - r).powi(3)
+        (self.h - r).powi(3) / self.volume
     }
 
     fn gradient(&self, r: f32) -> f32 {
@@ -28,8 +29,7 @@ impl Kernel for Spiky {
         if r > self.h {
             return 0.;
         }
-        let constant = -45. / (PI * self.h.powi(6));
-        constant * (self.h - r).powi(2)
+        -3. * (self.h - r).powi(2) / self.volume
     }
 
     fn lapacian(&self, r: f32) -> f32 {
@@ -37,7 +37,6 @@ impl Kernel for Spiky {
         if r > self.h {
             return 0.;
         }
-        let constant = 90. / (PI * self.h.powi(6));
-        constant * (self.h - r).powi(2)
+        6. * (self.h - r) / self.volume
     }
 }
