@@ -46,7 +46,7 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
             }
             let n_dir = color_field_gradient.normalize();
             let kappa = -color_field_lapacian / n;
-            accelration.push(-self.surface_tension_coeffecient * kappa * n * n_dir / density[i]);
+            accelration.push(self.surface_tension_coeffecient * kappa * n * n_dir / density[i]);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
@@ -57,7 +57,9 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
 mod tests {
     use super::*;
     use crate::model::density::Density;
+    use std::f32::consts::PI;
 
+    // surface_tension should all point to the (0.,0.,0.)
     #[test]
     fn direction_check() {
         let h = 5.;
@@ -68,15 +70,26 @@ mod tests {
         let surface_tension_model = SurfaceTension::new(1., mass, kernel);
         let mut grid = SpatialHashGrid::new(h);
 
-        let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
+        let mut position = vec![];
+        let split_count = 20;
+        let spacing_angle = 2. * PI / split_count as f32;
+        for n in 0..split_count / 2 {
+            let angle = spacing_angle * n as f32;
+            for offset in [0., PI] {
+                let i = (angle + offset).sin();
+                let j = (angle + offset).cos();
+                position.push(vec3(i, j, 0.).normalize());
+                position.push(vec3(i, 0., j).normalize());
+            }
+        }
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let viscosity = surface_tension_model.compute_accelration(&grid, &position, &density);
+        let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
-        assert_eq!(viscosity[0], -viscosity[2]);
-        assert_eq!(viscosity[1], Vec3::ZERO);
-        // cross product of two equal dir vector is 0
-        assert_eq!(viscosity[0].cross(vec3(1., 1., 1.)), Vec3::ZERO);
-        assert_eq!(viscosity[2].cross(vec3(-1., -1., -1.)), Vec3::ZERO);
+        for (pos, st) in position.iter().zip(surface_tension) {
+            println!("{:?}, {:?}", pos, st.normalize());
+            let dot = pos.dot(-st.normalize());
+            assert!(dot >= 0.95, "Value of dot product: {}", dot);
+        }
     }
 }
