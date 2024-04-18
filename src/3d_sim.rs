@@ -4,7 +4,7 @@ mod util_3d;
 
 use itertools::{iproduct, izip};
 use macroquad::prelude::*;
-use model::{density::Density, pressure::Pressure, viscosity::Viscosity};
+use model::{density::Density, pressure, viscosity::Viscosity};
 use uom::si::{
     dynamic_viscosity,
     f32::{DynamicViscosity, MassDensity},
@@ -74,7 +74,7 @@ async fn main() {
     let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
 
     let density_model = Density::new(poly6_kernel, mass);
-    let pressure_model = Pressure::new(spiky_kernel, mass, pressure_constant, rest_density);
+    let pressure_model = pressure::Tait::new(spiky_kernel, mass, rest_density, 7., 0.5, 9.81);
     let viscoity_model = Viscosity::new(viscosity_kernel, mass, viscosity_constant);
     let surface_tension_model =
         SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
