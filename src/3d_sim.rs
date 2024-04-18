@@ -44,7 +44,7 @@ async fn main() {
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 0.0001;
+    let pressure_constant = 0.01;
     let viscosity_constant = water.get_viscosity();
     let surface_tension_coefficient = water.get_surface_tension();
 
@@ -74,10 +74,10 @@ async fn main() {
     let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
 
     let density_model = Density::new(poly6_kernel, mass);
-    let pressure_model = Pressure::new(pressure_constant, rest_density, mass, spiky_kernel);
-    let viscoity_model = Viscosity::new(viscosity_constant, mass, viscosity_kernel);
+    let pressure_model = Pressure::new(spiky_kernel, mass, pressure_constant, rest_density);
+    let viscoity_model = Viscosity::new(viscosity_kernel, mass, viscosity_constant);
     let surface_tension_model =
-        SurfaceTension::new(surface_tension_coefficient, mass, poly6_kernel);
+        SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 

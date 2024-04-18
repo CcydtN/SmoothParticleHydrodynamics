@@ -4,17 +4,17 @@ use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
 pub struct SurfaceTension<T: kernel::Kernel> {
-    surface_tension_coeffecient: f32,
-    mass: f32,
     kernel: T,
+    mass: f32,
+    surface_tension_coefficient: f32,
 }
 
 impl<T: kernel::Kernel> SurfaceTension<T> {
-    pub fn new(surface_tension_coeffecient: f32, mass: f32, kernel: T) -> Self {
+    pub fn new(kernel: T, surface_tension_coefficient: f32, mass: f32) -> Self {
         Self {
-            surface_tension_coeffecient,
-            mass,
             kernel,
+            surface_tension_coefficient,
+            mass,
         }
     }
     pub fn compute_accelration(
@@ -46,7 +46,7 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
             }
             let n_dir = color_field_gradient.normalize();
             let kappa = -color_field_lapacian / n;
-            accelration.push(self.surface_tension_coeffecient * kappa * n * n_dir / density[i]);
+            accelration.push(self.surface_tension_coefficient * kappa * n * n_dir / density[i]);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
@@ -67,7 +67,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let surface_tension_model = SurfaceTension::new(1., mass, kernel);
+        let surface_tension_model = SurfaceTension::new(kernel, 1., mass);
         let mut grid = SpatialHashGrid::new(h);
 
         let mut position = vec![];

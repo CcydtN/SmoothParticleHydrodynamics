@@ -4,19 +4,19 @@ use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
 pub struct Pressure<T: kernel::Kernel> {
-    k: f32,
-    rest_density: f32,
-    mass: f32,
     kernel: T,
+    mass: f32,
+    rest_density: f32,
+    k: f32,
 }
 
 impl<T: kernel::Kernel> Pressure<T> {
-    pub fn new(k: f32, rest_density: f32, mass: f32, kernel: T) -> Self {
+    pub fn new(kernel: T, mass: f32, k: f32, rest_density: f32) -> Self {
         Self {
-            k,
-            rest_density,
-            mass,
             kernel,
+            mass,
+            rest_density,
+            k,
         }
     }
 
@@ -87,7 +87,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Pressure::new(100.0, 1., mass, kernel);
+        let pressure_model = Pressure::new(kernel, mass, 100.0, 1.);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];

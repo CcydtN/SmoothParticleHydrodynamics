@@ -4,17 +4,17 @@ use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
 pub struct Viscosity<T: kernel::Kernel> {
-    viscosity_constant: f32,
-    mass: f32,
     kernel: T,
+    mass: f32,
+    viscosity_constant: f32,
 }
 
 impl<T: kernel::Kernel> Viscosity<T> {
-    pub fn new(viscosity_constant: f32, mass: f32, kernel: T) -> Self {
+    pub fn new(kernel: T, mass: f32, viscosity_constant: f32) -> Self {
         Self {
-            viscosity_constant,
-            mass,
             kernel,
+            mass,
+            viscosity_constant,
         }
     }
     pub fn compute_accelration(
@@ -53,7 +53,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let viscoity_model = Viscosity::new(1., mass, kernel);
+        let viscoity_model = Viscosity::new(kernel, 1., mass);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
