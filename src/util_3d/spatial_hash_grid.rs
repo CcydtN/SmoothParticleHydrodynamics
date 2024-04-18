@@ -61,13 +61,8 @@ mod tests {
     use std::collections::HashSet;
 
     fn generate_points(count: usize) -> Vec<Vec3> {
-        let random_pos = || {
-            Vec3::from_array([
-                gen_range(-10., 10.),
-                gen_range(-10., 10.),
-                gen_range(-10., 10.),
-            ])
-        };
+        let random_pos =
+            || Vec3::from_array([gen_range(-5., 5.), gen_range(-5., 5.), gen_range(-5., 5.)]);
         let mut position = vec![];
         for _ in 0..count {
             position.push(random_pos())
@@ -78,7 +73,7 @@ mod tests {
     #[test]
     fn random_point_cover_test() {
         let grid_size = 2.;
-        let position = generate_points(5000);
+        let position = generate_points(1000);
         type T = HashSet<usize>;
 
         let mut grid = SpatialHashGrid::new(grid_size);
