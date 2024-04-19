@@ -21,7 +21,7 @@ impl<T: kernel::Kernel> Tait<T> {
         gravity: f32,
     ) -> Self {
         let speed_of_flow = 200. * gravity * height;
-        let pressure_constant = rest_density * speed_of_flow / gamma;
+        let pressure_constant = rest_density * speed_of_flow / (gamma);
         Self {
             kernel,
             mass,
