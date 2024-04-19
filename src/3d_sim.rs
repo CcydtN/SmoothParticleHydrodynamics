@@ -45,8 +45,8 @@ async fn main() {
 
     let rest_density = water.get_density();
     let pressure_constant = 0.01;
-    let viscosity_constant = water.get_viscosity();
-    let surface_tension_coefficient = water.get_surface_tension();
+    let viscosity_constant = water.get_viscosity() * 100.;
+    let surface_tension_coefficient = water.get_surface_tension() * 100.;
 
     let mass = 1. / 1000.; //1 gram or 0.001 kg
     let particle_per_side = 10i32;
@@ -74,7 +74,8 @@ async fn main() {
     let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
 
     let density_model = Density::new(poly6_kernel, mass);
-    let pressure_model = pressure::Tait::new(spiky_kernel, mass, rest_density, 7., 0.5, 9.81);
+    // let pressure_model = pressure::Simple::new(spiky_kernel, mass, pressure_constant, rest_density);
+    let pressure_model = pressure::Tait::new(spiky_kernel, mass, rest_density, 7., 0.1, 9.81);
     let viscoity_model = Viscosity::new(viscosity_kernel, mass, viscosity_constant);
     let surface_tension_model =
         SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
@@ -92,19 +93,21 @@ async fn main() {
         let surface_tension_acc =
             surface_tension_model.compute_accelration(&grid, &position, &density);
 
-        for (v, pressure, viscosity, surface_tension) in izip!(
-            &mut velocity,
-            pressure_acc,
-            viscosity_acc,
-            surface_tension_acc
-        ) {
-            *v += (pressure + viscosity + surface_tension) * time_step;
-        }
+        let count = position.len();
+        debug_assert_eq!(velocity.len(), count);
+        debug_assert_eq!(density.len(), count);
+        debug_assert_eq!(pressure_acc.len(), count);
+        debug_assert_eq!(viscosity_acc.len(), count);
+        debug_assert_eq!(surface_tension_acc.len(), count);
 
-        position
-            .iter_mut()
-            .zip(velocity.iter())
-            .for_each(|(d, &v)| *d += v * time_step);
+        let acceleration =
+            izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
+
+        izip!(position.iter_mut(), velocity.iter_mut(), acceleration).for_each(|(d, v, a)| {
+            *v += a * time_step / 2.;
+            *d += *v * time_step;
+            *v += a * time_step / 2.;
+        });
 
         clear_background(WHITE);
         set_camera(&Camera3D {
