@@ -3,13 +3,13 @@ use macroquad::prelude::*;
 use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
 
-pub struct Viscosity<T: kernel::Kernel> {
+pub struct Simple<T: kernel::Kernel> {
     kernel: T,
     mass: f32,
     viscosity_constant: f32,
 }
 
-impl<T: kernel::Kernel> Viscosity<T> {
+impl<T: kernel::Kernel> Simple<T> {
     pub fn new(kernel: T, mass: f32, viscosity_constant: f32) -> Self {
         Self {
             kernel,
@@ -53,7 +53,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let viscoity_model = Viscosity::new(kernel, 1., mass);
+        let viscoity_model = Simple::new(kernel, 1., mass);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];

@@ -2,11 +2,9 @@ mod kernel;
 mod model;
 mod util_3d;
 
-use std::f32::consts::PI;
-
 use itertools::{iproduct, izip};
 use macroquad::prelude::*;
-use model::{density::Density, pressure, viscosity::Viscosity};
+use model::{density::Density, pressure, viscosity};
 use uom::si::{
     dynamic_viscosity,
     f32::{DynamicViscosity, MassDensity},
@@ -88,13 +86,15 @@ async fn main() {
         spacing * particle_count as f32,
         9.81,
     );
-    let viscoity_model = Viscosity::new(viscosity_kernel, mass, viscosity_constant);
+    // let viscoity_model = viscosity::Simple::new(viscosity_kernel, mass, viscosity_constant);
+    let speed_sound = f32::sqrt(200. * 9.81 * 0.5);
+    let viscoity_model = viscosity::Artificial::new(viscosity_kernel, mass, speed_sound);
     let surface_tension_model =
         SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    let time_step = 1. / 1000.;
+    let time_step = 1. / 100000.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);
