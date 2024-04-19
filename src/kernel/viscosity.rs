@@ -10,7 +10,7 @@ pub struct Viscosity {
 
 impl Viscosity {
     pub fn new(h: f32) -> Self {
-        let volume = 8. * PI * h * h / 5.;
+        let volume = 2. * PI * h.powi(3) / 15.;
         Self { h, volume }
     }
 }

@@ -10,7 +10,7 @@ pub struct Poly6 {
 
 impl Poly6 {
     pub fn new(h: f32) -> Self {
-        let volume = h.powi(8) * PI / 4.;
+        let volume = h.powi(9) * PI * 64. / 315.;
         Self { h, volume }
     }
 }

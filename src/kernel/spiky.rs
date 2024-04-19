@@ -10,7 +10,7 @@ pub struct Spiky {
 
 impl Spiky {
     pub fn new(h: f32) -> Self {
-        let volume = h.powi(5) * PI / 10.;
+        let volume = h.powi(6) * PI / 15.;
         Self { h, volume }
     }
 }
