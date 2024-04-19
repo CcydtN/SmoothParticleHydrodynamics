@@ -2,6 +2,8 @@ mod kernel;
 mod model;
 mod util_3d;
 
+use std::f32::consts::PI;
+
 use itertools::{iproduct, izip};
 use macroquad::prelude::*;
 use model::{density::Density, pressure, viscosity::Viscosity};
@@ -51,10 +53,13 @@ async fn main() {
     let mass = 1. / 1000.; //1 gram or 0.001 kg
     let particle_per_side = 10i32;
     let particle_count = particle_per_side.pow(3); // total 1000;
-    let spacing = (mass * particle_count as f32 / rest_density).powf(1. / 3.);
-    let kernel_radius = spacing * 4.0;
+    let total_mass = mass * particle_count as f32;
+    let spacing = (total_mass / rest_density).powf(1. / 3.);
 
-    println!("{:?}, {:?}", spacing, kernel_radius);
+    // nice to have around 25-80 particle in the radius, which is between [3,4) (27 - 64 in count)
+    let kernel_radius = 3f32.powf(1. / 3.) * spacing;
+
+    dbg!(total_mass, spacing, kernel_radius);
 
     let mut position = vec![];
     let mut velocity = vec![Vec3::ZERO; particle_count as usize];
@@ -75,7 +80,14 @@ async fn main() {
 
     let density_model = Density::new(poly6_kernel, mass);
     // let pressure_model = pressure::Simple::new(spiky_kernel, mass, pressure_constant, rest_density);
-    let pressure_model = pressure::Tait::new(spiky_kernel, mass, rest_density, 7., 0.1, 9.81);
+    let pressure_model = pressure::Tait::new(
+        spiky_kernel,
+        mass,
+        rest_density,
+        7,
+        spacing * particle_count as f32,
+        9.81,
+    );
     let viscoity_model = Viscosity::new(viscosity_kernel, mass, viscosity_constant);
     let surface_tension_model =
         SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);

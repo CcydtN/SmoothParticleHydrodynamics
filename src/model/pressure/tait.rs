@@ -7,7 +7,7 @@ pub struct Tait<T: kernel::Kernel> {
     kernel: T,
     mass: f32,
     rest_density: f32,
-    gamma: f32,
+    gamma: i32,
     pressure_constant: f32,
 }
 
@@ -16,12 +16,13 @@ impl<T: kernel::Kernel> Tait<T> {
         kernel: T,
         mass: f32,
         rest_density: f32,
-        gamma: f32,
+        gamma: i32,
         height: f32,
         gravity: f32,
     ) -> Self {
-        let speed_of_flow = 200. * gravity * height;
-        let pressure_constant = rest_density * speed_of_flow / (gamma);
+        let max_v_sq = 2. * gravity * height;
+        let speed_of_flow_sq = 100. * max_v_sq;
+        let pressure_constant = rest_density * speed_of_flow_sq / (gamma as f32);
         Self {
             kernel,
             mass,
@@ -40,7 +41,7 @@ impl<T: kernel::Kernel> Tait<T> {
         assert_eq!(position.len(), density.len());
         let n = position.len();
         let p_func =
-            |&d: &f32| self.pressure_constant * ((d / self.rest_density).powf(self.gamma) - 1.);
+            |&d: &f32| self.pressure_constant * ((d / self.rest_density).powi(self.gamma) - 1.);
         let p = density.iter().map(p_func).collect::<Vec<_>>();
 
         let mut pressure = vec![];
@@ -77,7 +78,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Tait::new(kernel, mass, 100.0, 7., 1., 9.81);
+        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 1., 9.81);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
@@ -98,7 +99,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Tait::new(kernel, mass, 100.0, 7., 1., 9.81);
+        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 1., 9.81);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];

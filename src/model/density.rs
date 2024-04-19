@@ -1,5 +1,6 @@
 use crate::kernel;
 use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
+use itertools::Itertools;
 use macroquad::prelude::*;
 
 #[derive(Debug, Default)]
@@ -14,14 +15,14 @@ impl<T: kernel::Kernel> Density<T> {
     }
 
     pub fn compute(&self, grid: &SpatialHashGrid, position: &Vec<Vec3>) -> Vec<f32> {
-        let mut density = vec![];
-        for i in position {
-            let mut tmp = 0.;
-            for j in grid.lookup(i).map(|&x| position[x]) {
-                tmp += self.mass * self.kernel.function(i.distance(j))
-            }
-            density.push(tmp)
-        }
-        density
+        let density_equation = |r| self.mass * self.kernel.function(r);
+
+        let get_density = |i| {
+            grid.lookup(i)
+                .map(|&x| i.distance(position[x]))
+                .map(density_equation)
+                .sum()
+        };
+        position.into_iter().map(get_density).collect_vec()
     }
 }
