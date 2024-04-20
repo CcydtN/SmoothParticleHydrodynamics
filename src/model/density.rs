@@ -19,7 +19,7 @@ impl<T: kernel::Kernel> Density<T> {
 
         let get_density = |i| {
             grid.lookup(i)
-                .map(|&x| i.distance(position[x]))
+                .map(|&x| *i - position[x])
                 .map(density_equation)
                 .sum()
         };

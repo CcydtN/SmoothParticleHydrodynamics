@@ -32,7 +32,7 @@ impl<T: kernel::Kernel> Simple<T> {
                     continue;
                 }
                 sum += self.mass * (velocity[j] - velocity[i]) / density[j]
-                    * self.kernel.lapacian(position[i].distance(position[j]));
+                    * self.kernel.lapacian(position[i] - position[j]);
             }
             force.push(sum * self.viscosity_constant / density[i]);
         }

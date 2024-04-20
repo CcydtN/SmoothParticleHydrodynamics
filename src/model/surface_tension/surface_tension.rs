@@ -26,27 +26,22 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
         let mut accelration = vec![];
         for i in 0..position.len() {
             let mut color_field_gradient = Vec3::ZERO;
-            let mut color_field_lapacian = 0.;
+            let mut color_field_lapacian = Vec3::ZERO;
             for &j in grid.lookup(&position[i]) {
                 if i == j {
                     continue;
                 }
-                let r = position[i].distance(position[j]);
-                let dir = (position[i] - position[j]).normalize();
-                if dir == Vec3::ZERO {
-                    continue;
-                }
-                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j] * dir;
+                let r = position[i] - position[j];
+                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
                 color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
             }
-            let n = color_field_gradient.distance(Vec3::ZERO);
-            if n == 0.0 {
+            let n = color_field_gradient;
+            if n == Vec3::ZERO {
                 accelration.push(Vec3::ZERO);
                 continue;
             }
-            let n_dir = color_field_gradient.normalize();
-            let kappa = -color_field_lapacian / n;
-            accelration.push(self.surface_tension_coefficient * kappa * n * n_dir / density[i]);
+            let kappa = -color_field_lapacian.length() / n.length();
+            accelration.push(self.surface_tension_coefficient * kappa * n / density[i]);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
@@ -87,9 +82,11 @@ mod tests {
         let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
         for (pos, st) in position.iter().zip(surface_tension) {
-            println!("{:?}, {:?}", pos, st.normalize());
-            let dot = pos.dot(-st.normalize());
-            assert!(dot >= 0.95, "Value of dot product: {}", dot);
+            println!("{:?}, {:?}", pos, st);
+            let dot = pos.dot(st);
+            let magnitude = pos.length() * st.length();
+            let diff = (dot - magnitude).abs();
+            assert!(diff <= 1e-4, "Value of diff: {:?}", diff);
         }
     }
 }

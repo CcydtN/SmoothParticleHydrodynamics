@@ -16,7 +16,7 @@ impl Viscosity {
 }
 
 impl Kernel for Viscosity {
-    fn function(&self, r: f32) -> f32 {
+    fn function_scaler(&self, r: f32) -> f32 {
         assert!(r >= 0.0, "value of r: {}", r);
         if r > self.h {
             return 0.;
@@ -25,7 +25,7 @@ impl Kernel for Viscosity {
             / self.volume
     }
 
-    fn gradient(&self, r: f32) -> f32 {
+    fn gradient_scaler(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;
@@ -34,7 +34,7 @@ impl Kernel for Viscosity {
             / (r.powi(2) * self.h.powi(3) * 2. * self.volume)
     }
 
-    fn lapacian(&self, r: f32) -> f32 {
+    fn lapacian_scaler(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

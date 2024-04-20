@@ -51,11 +51,9 @@ impl<T: kernel::Kernel> Tait<T> {
                 if i == j {
                     continue;
                 }
-                let pressure = -self.mass
+                tmp += -self.mass
                     * (p[i] / density[i].powi(2) + p[j] / density[i].powi(2))
-                    * self.kernel.gradient((position[i]).distance(position[j]));
-                // direction
-                tmp += -pressure * (position[i] - position[j]).normalize();
+                    * self.kernel.gradient(position[i] - position[j]);
             }
             pressure.push(tmp);
         }

@@ -42,9 +42,9 @@ async fn main() {
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 0.01;
-    let viscosity_constant = water.get_viscosity() * 100.;
-    let surface_tension_coefficient = water.get_surface_tension() * 100.;
+    let pressure_constant = 0.5;
+    let viscosity_constant = water.get_viscosity();
+    let surface_tension_coefficient = water.get_surface_tension();
 
     let mass = 1. / 1000.; //1 gram or 0.001 kg
     let particle_per_side = 10i32;
@@ -81,19 +81,19 @@ async fn main() {
         mass,
         rest_density,
         7,
-        spacing * particle_count as f32,
+        spacing * particle_per_side as f32,
         9.81,
     );
     // let viscoity_model = viscosity::Simple::new(viscosity_kernel, mass, viscosity_constant);
     let speed_sound = f32::sqrt(200. * 9.81 * 0.5);
     let viscoity_model = viscosity::Artificial::new(viscosity_kernel, mass, speed_sound);
-    let surface_tension_model =
-        surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
-    // let surface_tension_model = surface_tension::BeakerTeschner07::new(poly6_kernel, mass);
+    // let surface_tension_model =
+    //     surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
+    let surface_tension_model = surface_tension::BeakerTeschner07::new(poly6_kernel, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    let time_step = 1. / 100000.;
+    let time_step = 1. / 10000.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);

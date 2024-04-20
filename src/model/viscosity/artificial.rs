@@ -43,15 +43,13 @@ impl<T: kernel::Kernel> Artificial<T> {
         let viscosity = |((pos, v), d)| {
             grid.lookup(pos)
                 .map(|&j| {
-                    let r = pos.distance(position[j]);
-                    if r == 0.0 {
-                        return Vec3::ZERO;
+                    let r = *pos - position[j];
+                    if r == Vec3::ZERO {
+                        return r;
                     }
-                    let scaler = -self.mass
+                    -self.mass
                         * pi_ab(pos, &position[j], v, &velocity[j], d, density[j])
-                        * self.kernel.gradient(r);
-                    let dir: Vec3 = *v - velocity[j];
-                    dir.normalize_or_zero() * scaler
+                        * self.kernel.gradient(r)
                 })
                 .fold(Vec3::ZERO, |a, b| a + b)
         };

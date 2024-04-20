@@ -21,24 +21,23 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
         let mut accelration = vec![];
         for i in 0..position.len() {
             let mut color_field_gradient = Vec3::ZERO;
-            let mut color_field_lapacian = 0.;
+            let mut color_field_lapacian = Vec3::ZERO;
             let mut sum = Vec3::ZERO;
             for &j in grid.lookup(&position[i]) {
                 if i == j {
                     continue;
                 }
-                let r = position[i].distance(position[j]);
-                let dir = (position[i] - position[j]).normalize();
-                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j] * dir;
+                let r = position[i] - position[j];
+                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
                 color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
-                sum += self.mass * self.kernel.function(r) * dir;
+                sum += self.mass * self.kernel.function(r) * r.normalize();
             }
-            let n = color_field_gradient.distance(Vec3::ZERO);
-            if n == 0.0 {
+            let n = color_field_gradient;
+            if n.length() == 0. {
                 accelration.push(Vec3::ZERO);
                 continue;
             }
-            let kappa = -color_field_lapacian / n;
+            let kappa = -color_field_lapacian.length() / n.length();
             accelration.push(-kappa / self.mass * sum);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
@@ -60,7 +59,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let surface_tension_model = BeakerTeschner07::new(kernel, 1., mass);
+        let surface_tension_model = BeakerTeschner07::new(kernel, mass);
         let mut grid = SpatialHashGrid::new(h);
 
         let mut position = vec![];
@@ -80,9 +79,11 @@ mod tests {
         let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
         for (pos, st) in position.iter().zip(surface_tension) {
-            println!("{:?}, {:?}", pos, st.normalize());
-            let dot = pos.dot(-st.normalize());
-            assert!(dot >= 0.95, "Value of dot product: {}", dot);
+            println!("{:?}, {:?}", pos, st);
+            let dot = pos.dot(st);
+            let magnitude = pos.length() * st.length();
+            let diff = (dot - magnitude).abs();
+            assert!(diff <= 2e-3, "Value of diff: {:?}", diff);
         }
     }
 }
