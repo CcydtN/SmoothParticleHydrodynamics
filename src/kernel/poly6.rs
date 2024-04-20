@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::kernel::common::Kernel;
+use crate::kernel::Kernel;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Poly6 {
