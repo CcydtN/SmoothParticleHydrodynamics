@@ -10,7 +10,7 @@ use uom::si::{
     f32::{DynamicViscosity, MassDensity},
     mass_density,
 };
-use util_3d::spatial_hash_grid::SpatialHashGrid;
+use util_3d::*;
 
 struct Material {
     density: MassDensity,

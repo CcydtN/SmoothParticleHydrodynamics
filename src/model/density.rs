@@ -1,5 +1,5 @@
 use crate::kernel;
-use crate::util_3d::spatial_hash_grid::SpatialHashGrid;
+use crate::util_3d::*;
 use itertools::Itertools;
 use macroquad::prelude::*;
 
