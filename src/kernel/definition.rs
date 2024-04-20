@@ -12,10 +12,10 @@ pub trait Kernel {
     }
 
     fn gradient(&self, r: Vec3) -> Vec3 {
-        self.gradient_scaler(r.length()) * r.normalize()
+        self.gradient_scaler(r.length()) * r
     }
 
     fn lapacian(&self, r: Vec3) -> Vec3 {
-        self.lapacian_scaler(r.length()) * r.normalize()
+        self.lapacian_scaler(r.length()) * r
     }
 }

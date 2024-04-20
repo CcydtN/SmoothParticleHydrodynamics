@@ -30,7 +30,7 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
                 let r = position[i] - position[j];
                 color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
                 color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
-                sum += self.mass * self.kernel.function(r) * r.normalize();
+                sum += self.mass * self.kernel.function(r) * r;
             }
             let n = color_field_gradient;
             if n.length() == 0. {

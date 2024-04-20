@@ -38,7 +38,8 @@ impl<T: kernel::Kernel> Simple<T> {
                 if i == j {
                     continue;
                 }
-                tmp += -self.mass * (p[i] + p[j]) / (2. * density[j])
+                tmp += -self.mass
+                    * (p[i] / density[i].powi(2) + p[j] / density[j].powi(2))
                     * self.kernel.gradient(position[i] - position[j]);
             }
             pressure.push(tmp / density[i]);
