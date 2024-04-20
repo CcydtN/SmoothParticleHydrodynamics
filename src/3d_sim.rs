@@ -4,15 +4,13 @@ mod util_3d;
 
 use itertools::{iproduct, izip};
 use macroquad::prelude::*;
-use model::{density::Density, pressure, viscosity};
+use model::{density::Density, pressure, surface_tension, viscosity};
 use uom::si::{
     dynamic_viscosity,
     f32::{DynamicViscosity, MassDensity},
     mass_density,
 };
 use util_3d::spatial_hash_grid::SpatialHashGrid;
-
-use crate::model::surface_tension::SurfaceTension;
 
 struct Material {
     density: MassDensity,
@@ -55,7 +53,7 @@ async fn main() {
     let spacing = (total_mass / rest_density).powf(1. / 3.);
 
     // nice to have around 25-80 particle in the radius, which is between [3,4) (27 - 64 in count)
-    let kernel_radius = 3f32.powf(1. / 3.) * spacing;
+    let kernel_radius = 64f32.powf(1. / 3.) * spacing;
 
     dbg!(total_mass, spacing, kernel_radius);
 
@@ -90,7 +88,8 @@ async fn main() {
     let speed_sound = f32::sqrt(200. * 9.81 * 0.5);
     let viscoity_model = viscosity::Artificial::new(viscosity_kernel, mass, speed_sound);
     let surface_tension_model =
-        SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
+        surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
+    // let surface_tension_model = surface_tension::BeakerTeschner07::new(poly6_kernel, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
