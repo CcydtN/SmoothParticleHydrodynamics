@@ -34,15 +34,20 @@ impl<T: kernel::Kernel> Simple<T> {
         let mut pressure = vec![];
         for i in 0..n {
             let mut tmp = vec3(0., 0., 0.);
-            for &j in grid.lookup(&position[i]) {
+            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }
-                tmp += -self.mass
-                    * (p[i] / density[i].powi(2) + p[j] / density[j].powi(2))
-                    * self.kernel.gradient(position[i] - position[j]);
+                let gradient = self.kernel.gradient(position[i] - position[j]);
+                let force =
+                    -self.mass * (p[i] / density[i].powi(2) + p[j] / density[j].powi(2)) * gradient
+                        / density[i];
+                if force.is_nan() {
+                    continue;
+                }
+                tmp += force;
             }
-            pressure.push(tmp / density[i]);
+            pressure.push(tmp);
         }
         pressure.iter().for_each(|p| assert!(!p.is_nan()));
         pressure

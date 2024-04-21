@@ -27,7 +27,14 @@ where
     }
 
     fn gradient(&self, r: Vec3) -> Vec3 {
-        self.gradient_impl(r.length()) * r
+        let scaler = self.gradient_impl(r.length());
+        let grad = r * scaler;
+        // debug_assert!(grad.is_nan(), "r is {}, length is {}", r, r.length());
+        if grad.is_nan() {
+            Vec3::ZERO
+        } else {
+            grad
+        }
     }
 
     fn lapacian(&self, r: Vec3) -> Vec3 {

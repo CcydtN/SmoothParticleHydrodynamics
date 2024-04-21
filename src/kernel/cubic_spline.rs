@@ -1,5 +1,5 @@
 use crate::kernel::definition::KernelImpl;
-use std::f32::consts::PI;
+use std::{f32::consts::PI, ops::DivAssign};
 
 #[derive(Debug, Clone, Copy)]
 pub struct CubicSpline {
@@ -23,9 +23,9 @@ impl KernelImpl for CubicSpline {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
-                (-4. * (self.h - r).powi(3) + (2. * self.h - r).powi(3)) / self.h.powi(6)
+                (-4. * (self.h - r).powi(3) + (2. * self.h - r).powi(3)) / self.h.powi(3)
             }
-            x if x <= 2. * self.h => (2. * self.h - r).powi(3) / self.h.powi(6),
+            x if x <= 2. * self.h => (2. * self.h - r).powi(3) / self.h.powi(3),
             _ => 0.,
         };
         value / self.volume
@@ -33,13 +33,13 @@ impl KernelImpl for CubicSpline {
 
     fn gradient_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
-        let value = match r {
-            x if x <= self.h => {
-                3. * (4. * self.h.powi(3) * (self.h - r).powi(2) - (2. * self.h - r).powi(2))
-                    / self.h.powi(6)
-            }
-            x if x <= 2. * self.h => -3. * (2. * self.h - r).powi(2) / self.h.powi(6),
-            _ => 0.,
+        let value = if r <= self.h {
+            3. * (4. * self.h.powi(3) * (self.h - r).powi(2) - (2. * self.h - r).powi(2))
+                / self.h.powi(3)
+        } else if r <= 2. * self.h {
+            -3. * (2. * self.h - r).powi(2) / self.h.powi(3)
+        } else {
+            0.
         };
         value / self.volume
     }
@@ -48,9 +48,9 @@ impl KernelImpl for CubicSpline {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
-                6. * (4. * self.h.powi(3) * (-self.h + r) + 2. * self.h - r) / self.h.powi(6)
+                6. * (4. * self.h.powi(3) * (-self.h + r) + 2. * self.h - r) / self.h.powi(3)
             }
-            x if x <= 2. * self.h => 6. * (2. * self.h - r) / self.h.powi(6),
+            x if x <= 2. * self.h => 6. * (2. * self.h - r) / self.h.powi(3),
             _ => 0.,
         };
         value / self.volume

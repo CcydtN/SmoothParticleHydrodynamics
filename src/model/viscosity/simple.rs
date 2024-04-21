@@ -27,7 +27,7 @@ impl<T: kernel::Kernel> Simple<T> {
         let mut force = vec![];
         for i in 0..position.len() {
             let mut sum = Vec3::ZERO;
-            for &j in grid.lookup(&position[i]) {
+            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }

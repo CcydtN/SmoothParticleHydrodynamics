@@ -27,7 +27,7 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
         for i in 0..position.len() {
             let mut color_field_gradient = Vec3::ZERO;
             let mut color_field_lapacian = Vec3::ZERO;
-            for &j in grid.lookup(&position[i]) {
+            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }

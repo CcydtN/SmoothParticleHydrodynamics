@@ -1,9 +1,10 @@
 use macroquad::prelude::*;
 
-use crate::kernel;
+use crate::kernel::Kernel;
 use crate::util_3d::*;
 
-pub struct Tait<T: kernel::Kernel> {
+#[derive(Debug)]
+pub struct Tait<T: Kernel> {
     kernel: T,
     mass: f32,
     rest_density: f32,
@@ -11,7 +12,7 @@ pub struct Tait<T: kernel::Kernel> {
     pressure_constant: f32,
 }
 
-impl<T: kernel::Kernel> Tait<T> {
+impl<T: Kernel + std::fmt::Debug> Tait<T> {
     pub fn new(
         kernel: T,
         mass: f32,
@@ -46,14 +47,15 @@ impl<T: kernel::Kernel> Tait<T> {
 
         let mut pressure = vec![];
         for i in 0..n {
-            let mut tmp = vec3(0., 0., 0.);
-            for &j in grid.lookup(&position[i]) {
+            let mut tmp = Vec3::ZERO;
+            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }
-                tmp += -self.mass
-                    * (p[i] / density[i].powi(2) + p[j] / density[i].powi(2))
-                    * self.kernel.gradient(position[i] - position[j]);
+                let gradient = self.kernel.gradient(position[i] - position[j]);
+                tmp +=
+                    -self.mass * (p[i] / density[i].powi(2) + p[j] / density[j].powi(2)) * gradient;
+                debug_assert!(!tmp.is_nan());
             }
             pressure.push(tmp);
         }

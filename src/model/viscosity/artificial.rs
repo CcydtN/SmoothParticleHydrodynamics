@@ -41,7 +41,7 @@ impl<T: kernel::Kernel> Artificial<T> {
                 numerator / denominator * constant
             };
         let viscosity = |((pos, v), d)| {
-            grid.lookup(pos)
+            grid.lookup(pos, self.kernel.support_radius())
                 .map(|&j| {
                     let r = *pos - position[j];
                     if r == Vec3::ZERO {

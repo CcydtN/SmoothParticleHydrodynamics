@@ -23,7 +23,7 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
             let mut color_field_gradient = Vec3::ZERO;
             let mut color_field_lapacian = Vec3::ZERO;
             let mut sum = Vec3::ZERO;
-            for &j in grid.lookup(&position[i]) {
+            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }

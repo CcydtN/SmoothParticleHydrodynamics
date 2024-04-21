@@ -3,7 +3,7 @@ use std::{collections::HashMap, ops::Range};
 use itertools::iproduct;
 use macroquad::prelude::*;
 
-type Key = [i32; 3];
+type Key = [u32; 3];
 
 #[derive(Debug, Default)]
 pub struct SpatialHashGrid {
@@ -21,7 +21,8 @@ impl SpatialHashGrid {
     }
 
     fn hash(&self, pos: Vec3) -> Key {
-        (pos / self.grid_size).ceil().as_ivec3().to_array()
+        let Vec3 { x, y, z } = (pos / self.grid_size).ceil();
+        [x.to_bits(), y.to_bits(), z.to_bits()]
     }
 
     pub fn update(&mut self, position: &Vec<Vec3>) {
@@ -43,11 +44,12 @@ impl SpatialHashGrid {
         self.table = tmp.into_values().flatten().collect();
     }
 
-    pub fn lookup(&self, position: &Vec3) -> impl Iterator<Item = &usize> {
-        let r = 1i32;
-        let coor = self.hash(position.clone());
+    pub fn lookup(&self, position: &Vec3, support_radius: f32) -> impl Iterator<Item = &usize> {
+        let r: i32 = (support_radius / self.grid_size).ceil() as i32;
+        let position = position.clone();
         iproduct!(-r..=r, -r..=r, -r..=r)
-            .map(move |(i, j, k)| [coor[0] + i, coor[1] + j, coor[2] + k])
+            .map(|(i, j, k)| vec3(i as f32, j as f32, k as f32) * self.grid_size)
+            .map(move |target| self.hash(position + target))
             .filter_map(|key| self.info.get(&key).cloned())
             .filter_map(|index| self.table.get(index))
             .flatten()
@@ -57,6 +59,7 @@ impl SpatialHashGrid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use itertools::Itertools;
     use macroquad::rand::gen_range;
     use std::collections::HashSet;
 
@@ -73,6 +76,7 @@ mod tests {
     #[test]
     fn random_point_cover_test() {
         let grid_size = 2.;
+        let search_size = 2. * grid_size;
         let position = generate_points(1000);
         type T = HashSet<usize>;
 
@@ -83,12 +87,12 @@ mod tests {
             let answer = position
                 .iter()
                 .enumerate()
-                .filter(|(_, &val)| pos.distance(val) < grid_size)
+                .filter(|(_, &val)| pos.distance(val) <= search_size)
                 .map(|(idx, _)| idx)
                 .collect::<T>();
 
-            let ret = grid.lookup(&pos).cloned().collect::<T>();
-            assert_eq!(ret.intersection(&answer).cloned().collect::<T>(), answer);
+            let ret = grid.lookup(&pos, search_size).cloned().collect::<T>();
+            assert_eq!(ret.intersection(&answer).count(), answer.len());
         }
     }
 }

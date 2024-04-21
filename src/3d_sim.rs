@@ -79,25 +79,30 @@ async fn main() {
     let poly6_kernel = kernel::Poly6::new(kernel_radius);
     let spiky_kernel = kernel::Spiky::new(kernel_radius);
     let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
+    let cubic_spline = kernel::CubicSpline::new(kernel_radius);
 
-    let density_model = Density::new(poly6_kernel, mass);
+    let density_model = Density::new(cubic_spline, mass);
     // let pressure_model = pressure::Simple::new(spiky_kernel, mass, pressure_constant, rest_density);
-    let pressure_model = pressure::Tait::new(spiky_kernel, mass, rest_density, 7, 0.5, 9.81);
+    let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, 0.5, 9.81);
     // let viscoity_model = viscosity::Simple::new(viscosity_kernel, mass, viscosity_constant);
     let speed_sound = f32::sqrt(200. * 9.81 * 0.5);
-    let viscoity_model = viscosity::Artificial::new(viscosity_kernel, mass, speed_sound);
-    // let surface_tension_model =
-    //     surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
-    let surface_tension_model = surface_tension::BeakerTeschner07::new(poly6_kernel, mass);
+    let viscoity_model = viscosity::Artificial::new(cubic_spline, mass, speed_sound);
+    let surface_tension_model =
+        surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
+    // let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    grid.update(&position);
-    let density = density_model.compute(&grid, &position);
-    dbg!(density);
-    return;
+    // grid.update(&position);
+    // let density = density_model.compute(&grid, &position);
+    // dbg!(density);
+    // dbg!(density_model);
+    // dbg!(cubic_spline);
+    // dbg!(poly6_kernel);
+    // return;
 
-    let time_step = 1. / 2000.;
+    let time_step = 1. / 10000.;
+    // let time_step = 1. / 2000.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);
@@ -136,7 +141,6 @@ async fn main() {
             ..Default::default()
         });
         for &pos in &position {
-            // draw_sphere(pos, spacing / 8. , None, BLACK);
             draw_sphere_wires(pos, spacing / 8., None, SKYBLUE);
         }
         next_frame().await;
