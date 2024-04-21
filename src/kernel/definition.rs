@@ -45,4 +45,26 @@ pub mod tests {
             );
         })
     }
+
+    pub fn check_gradient(kernel: impl Kernel, values: &[Value]) {
+        values.iter().for_each(|Value { r, w }| {
+            let ret = kernel.gradient_scaler(*r);
+            let diff = (ret - w).abs();
+            assert!(
+                diff <= f32::EPSILON,
+                "Value not match, ret = {ret}, w = {w}"
+            );
+        })
+    }
+
+    pub fn check_lapcian(kernel: impl Kernel, values: &[Value]) {
+        values.iter().for_each(|Value { r, w }| {
+            let ret = kernel.lapacian_scaler(*r);
+            let diff = (ret - w).abs();
+            assert!(
+                diff <= f32::EPSILON,
+                "Value not match, ret = {ret}, w = {w}"
+            );
+        })
+    }
 }

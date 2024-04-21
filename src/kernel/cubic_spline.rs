@@ -77,4 +77,38 @@ mod tests {
         let kernel = CubicSpline::new(1.);
         tests::check_function(kernel, &function_values);
     }
+
+    fn verify_gradient() {
+        let values = [
+            (0.0, 0.).into(),
+            (0.2, -0.162338041953733).into(),
+            (0.4, -0.267380304394384).into(),
+            (0.6000000000000001, -0.315126787321953).into(),
+            (0.8, -0.305577490736439).into(),
+            (1.0, -0.238732414637843).into(),
+            (1.2, -0.152788745368220).into(),
+            (1.4, -0.0859436692696235).into(),
+            (1.6, -0.0381971863420549).into(),
+            (1.8, -0.00954929658551372).into(),
+        ];
+        let kernel = CubicSpline::new(1.);
+        tests::check_gradient(kernel, &values);
+    }
+
+    fn verify_lapcian() {
+        let values = [
+            (0.0, -0.954929658551372).into(),
+            (0.2, -0.668450760985960).into(),
+            (0.4, -0.381971863420549).into(),
+            (0.6000000000000001, -0.0954929658551371).into(),
+            (0.8, 0.190985931710274).into(),
+            (1.0, 0.477464829275686).into(),
+            (1.2, 0.381971863420549).into(),
+            (1.4, 0.286478897565412).into(),
+            (1.6, 0.190985931710274).into(),
+            (1.8, 0.0954929658551372).into(),
+        ];
+        let kernel = CubicSpline::new(1.);
+        tests::check_lapcian(kernel, &values);
+    }
 }
