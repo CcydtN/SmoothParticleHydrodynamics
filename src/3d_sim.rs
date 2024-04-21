@@ -43,12 +43,12 @@ async fn main() {
     let water = Material {
         density: MassDensity::new::<mass_density::kilogram_per_cubic_meter>(1000.),
         molar_mass: MolarMass::new::<molar_mass::gram_per_mole>(18.),
-        viscosity: DynamicViscosity::new::<dynamic_viscosity::micropascal_second>(0.89), // at 25 degree C
-        surface_tension: 72.53 / 1000.,
+        viscosity: DynamicViscosity::new::<dynamic_viscosity::micropascal_second>(1.),
+        surface_tension: 100. / 1000.,
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 3.;
+    let pressure_constant = 1000.;
     let viscosity_constant = water.get_viscosity();
     let surface_tension_coefficient = water.get_surface_tension();
 
@@ -92,12 +92,12 @@ async fn main() {
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
-    // grid.update(&position);
-    // let density = density_model.compute(&grid, &position);
-    // dbg!(density);
-    // return;
+    grid.update(&position);
+    let density = density_model.compute(&grid, &position);
+    dbg!(density);
+    return;
 
-    let time_step = 1. / 10000.;
+    let time_step = 1. / 2000.;
     let mut t: f32 = 0.;
     loop {
         grid.update(&position);
@@ -136,7 +136,8 @@ async fn main() {
             ..Default::default()
         });
         for &pos in &position {
-            draw_sphere(pos, spacing / 8., None, SKYBLUE);
+            // draw_sphere(pos, spacing / 8. , None, BLACK);
+            draw_sphere_wires(pos, spacing / 8., None, SKYBLUE);
         }
         next_frame().await;
         t += time_step;
