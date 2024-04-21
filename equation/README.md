@@ -15,14 +15,14 @@ Laplacian:
 $$\nabla^2 W(r_a - r_b,h)$$
 
 1-D Constant
-$$\int W(\vec{r}, h)\cdot d\vec{r} = 1$$
+$$\int_{-h}^h W(\vec{r}, h)\cdot d\vec{r} = 1$$
 2-D Constant
-$$\int W(\vec{r}, h) \cdot 2\pi\cdot dr = 1$$
+$$\int_0^h W(\vec{r}, h)\cdot 2\pi r \cdot dr = 1$$
 > $$\int W(\vec{r}, h)\cdot dA = 1$$
 > $$A = \pi r^2$$
 > $$dA/dr = 2\pi\cdot r$$
 3-D Constant
-$$\int W(\vec{r}, h)\cdot 4\pi r^2 dr = 1$$
+$$\int_0^h W(\vec{r}, h)\cdot 4\pi r^2 dr = 1$$
 > $$\int W(\vec{r}, h)\cdot dV = 1$$
 > $$V = 4/3\pi r^3$$
 > $$dV/dr = 4\pi r^2$$
