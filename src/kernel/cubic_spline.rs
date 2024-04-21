@@ -1,4 +1,4 @@
-use crate::kernel::Kernel;
+use crate::kernel::definition::KernelImpl;
 use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy)]
@@ -14,12 +14,12 @@ impl CubicSpline {
     }
 }
 
-impl Kernel for CubicSpline {
-    fn support_radius(&self) -> f32 {
+impl KernelImpl for CubicSpline {
+    fn support_radius_impl(&self) -> f32 {
         2. * self.h
     }
 
-    fn function_scaler(&self, r: f32) -> f32 {
+    fn function_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
@@ -31,7 +31,7 @@ impl Kernel for CubicSpline {
         value / self.volume
     }
 
-    fn gradient_scaler(&self, r: f32) -> f32 {
+    fn gradient_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
@@ -44,7 +44,7 @@ impl Kernel for CubicSpline {
         value / self.volume
     }
 
-    fn lapacian_scaler(&self, r: f32) -> f32 {
+    fn lapacian_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {

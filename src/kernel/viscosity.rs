@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use crate::kernel::Kernel;
 
+use super::definition::KernelImpl;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Viscosity {
     h: f32,
@@ -15,8 +17,12 @@ impl Viscosity {
     }
 }
 
-impl Kernel for Viscosity {
-    fn function_scaler(&self, r: f32) -> f32 {
+impl KernelImpl for Viscosity {
+    fn support_radius_impl(&self) -> f32 {
+        self.h
+    }
+
+    fn function_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0, "value of r: {}", r);
         if r > self.h {
             return 0.;
@@ -25,7 +31,7 @@ impl Kernel for Viscosity {
             / self.volume
     }
 
-    fn gradient_scaler(&self, r: f32) -> f32 {
+    fn gradient_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;
@@ -34,7 +40,7 @@ impl Kernel for Viscosity {
             / (r.powi(2) * self.h.powi(3) * 2. * self.volume)
     }
 
-    fn lapacian_scaler(&self, r: f32) -> f32 {
+    fn lapacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

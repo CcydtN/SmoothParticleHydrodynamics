@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::kernel::Kernel;
+use crate::kernel::definition::KernelImpl;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Poly6 {
@@ -15,8 +15,12 @@ impl Poly6 {
     }
 }
 
-impl Kernel for Poly6 {
-    fn function_scaler(&self, r: f32) -> f32 {
+impl KernelImpl for Poly6 {
+    fn support_radius_impl(&self) -> f32 {
+        self.h
+    }
+
+    fn function_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0, "value of r: {}", r);
         if r > self.h {
             return 0.;
@@ -24,7 +28,7 @@ impl Kernel for Poly6 {
         (self.h.powi(2) - r.powi(2)).powi(3) / self.volume
     }
 
-    fn gradient_scaler(&self, r: f32) -> f32 {
+    fn gradient_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;
@@ -32,7 +36,7 @@ impl Kernel for Poly6 {
         -6. * r * (self.h.powi(2) - r.powi(2)).powi(2) / self.volume
     }
 
-    fn lapacian_scaler(&self, r: f32) -> f32 {
+    fn lapacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

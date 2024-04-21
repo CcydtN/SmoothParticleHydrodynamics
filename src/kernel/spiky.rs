@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::kernel::Kernel;
+use super::definition::KernelImpl;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Spiky {
@@ -15,8 +15,12 @@ impl Spiky {
     }
 }
 
-impl Kernel for Spiky {
-    fn function_scaler(&self, r: f32) -> f32 {
+impl KernelImpl for Spiky {
+    fn support_radius_impl(&self) -> f32 {
+        self.h
+    }
+
+    fn function_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0, "value of r: {}", r);
         if r > self.h {
             return 0.;
@@ -24,7 +28,7 @@ impl Kernel for Spiky {
         (self.h - r).powi(3) / self.volume
     }
 
-    fn gradient_scaler(&self, r: f32) -> f32 {
+    fn gradient_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;
@@ -32,7 +36,7 @@ impl Kernel for Spiky {
         -3. * (self.h - r).powi(2) / self.volume
     }
 
-    fn lapacian_scaler(&self, r: f32) -> f32 {
+    fn lapacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

@@ -1,26 +1,37 @@
 use macroquad::math::Vec3;
 
+pub trait KernelImpl {
+    fn support_radius_impl(&self) -> f32;
+    fn function_impl(&self, r: f32) -> f32;
+    fn gradient_impl(&self, r: f32) -> f32;
+    fn lapacian_impl(&self, r: f32) -> f32;
+}
+
 pub trait Kernel {
+    fn support_radius(&self) -> f32;
+    fn function(&self, r: Vec3) -> f32;
+    fn gradient(&self, r: Vec3) -> Vec3;
+    fn lapacian(&self, r: Vec3) -> Vec3;
+}
+
+impl<T> Kernel for T
+where
+    T: KernelImpl,
+{
     fn support_radius(&self) -> f32 {
-        1.
+        self.support_radius_impl()
     }
 
-    fn function_scaler(&self, r: f32) -> f32;
-
-    fn gradient_scaler(&self, r: f32) -> f32;
-
-    fn lapacian_scaler(&self, r: f32) -> f32;
-
     fn function(&self, r: Vec3) -> f32 {
-        self.function_scaler(r.length())
+        self.function_impl(r.length())
     }
 
     fn gradient(&self, r: Vec3) -> Vec3 {
-        self.gradient_scaler(r.length()) * r
+        self.gradient_impl(r.length()) * r
     }
 
     fn lapacian(&self, r: Vec3) -> Vec3 {
-        self.lapacian_scaler(r.length()) * r
+        self.lapacian_impl(r.length()) * r
     }
 }
 
@@ -39,9 +50,9 @@ pub mod tests {
         }
     }
 
-    pub fn check_function(kernel: impl Kernel, values: &[Value]) {
+    fn check(func: impl Fn(f32) -> f32, values: &[Value]) {
         values.iter().for_each(|Value { r, w }| {
-            let ret = kernel.function_scaler(*r);
+            let ret = func(*r);
             let diff = (ret - w).abs();
             assert!(
                 diff <= f32::EPSILON,
@@ -50,25 +61,18 @@ pub mod tests {
         })
     }
 
-    pub fn check_gradient(kernel: impl Kernel, values: &[Value]) {
-        values.iter().for_each(|Value { r, w }| {
-            let ret = kernel.gradient_scaler(*r);
-            let diff = (ret - w).abs();
-            assert!(
-                diff <= f32::EPSILON,
-                "Value not match, r = {r}\nret = {ret}, w = {w}"
-            );
-        })
+    pub fn check_function(kernel: impl KernelImpl, values: &[Value]) {
+        let wrapper = |r| kernel.function_impl(r);
+        check(wrapper, values)
     }
 
-    pub fn check_lapcian(kernel: impl Kernel, values: &[Value]) {
-        values.iter().for_each(|Value { r, w }| {
-            let ret = kernel.lapacian_scaler(*r);
-            let diff = (ret - w).abs();
-            assert!(
-                diff <= f32::EPSILON,
-                "Value not match, r = {r}\nret = {ret}, w = {w}"
-            );
-        })
+    pub fn check_gradient(kernel: impl KernelImpl, values: &[Value]) {
+        let wrapper = |r| kernel.gradient_impl(r);
+        check(wrapper, values)
+    }
+
+    pub fn check_lapcian(kernel: impl KernelImpl, values: &[Value]) {
+        let wrapper = |r| kernel.lapacian_impl(r);
+        check(wrapper, values)
     }
 }
