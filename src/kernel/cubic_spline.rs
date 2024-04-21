@@ -15,6 +15,10 @@ impl CubicSpline {
 }
 
 impl Kernel for CubicSpline {
+    fn support_radius(&self) -> f32 {
+        2. * self.h
+    }
+
     fn function_scaler(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
@@ -31,10 +35,10 @@ impl Kernel for CubicSpline {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
-                3. * (4. * self.h.powi(3) * (self.h - r).powi(2) + (2. * self.h - r).powi(2))
+                3. * (4. * self.h.powi(3) * (self.h - r).powi(2) - (2. * self.h - r).powi(2))
                     / self.h.powi(6)
             }
-            x if x <= 2. * self.h => 3. * (2. * self.h - r).powi(2) / self.h.powi(6),
+            x if x <= 2. * self.h => -3. * (2. * self.h - r).powi(2) / self.h.powi(6),
             _ => 0.,
         };
         value / self.volume
@@ -44,8 +48,7 @@ impl Kernel for CubicSpline {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
-                6. * (4. * self.h.powi(3) * (-self.h + r).powi(2) + 2. * self.h - r)
-                    / self.h.powi(6)
+                6. * (4. * self.h.powi(3) * (-self.h + r) + 2. * self.h - r) / self.h.powi(6)
             }
             x if x <= 2. * self.h => 6. * (2. * self.h - r) / self.h.powi(6),
             _ => 0.,
@@ -78,6 +81,7 @@ mod tests {
         tests::check_function(kernel, &function_values);
     }
 
+    #[test]
     fn verify_gradient() {
         let values = [
             (0.0, 0.).into(),
@@ -95,6 +99,7 @@ mod tests {
         tests::check_gradient(kernel, &values);
     }
 
+    #[test]
     fn verify_lapcian() {
         let values = [
             (0.0, -0.954929658551372).into(),

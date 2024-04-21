@@ -1,6 +1,10 @@
 use macroquad::math::Vec3;
 
 pub trait Kernel {
+    fn support_radius(&self) -> f32 {
+        1.
+    }
+
     fn function_scaler(&self, r: f32) -> f32;
 
     fn gradient_scaler(&self, r: f32) -> f32;
@@ -41,7 +45,7 @@ pub mod tests {
             let diff = (ret - w).abs();
             assert!(
                 diff <= f32::EPSILON,
-                "Value not match, ret = {ret}, w = {w}"
+                "Value not match, r = {r}\nret = {ret}, w = {w}"
             );
         })
     }
@@ -52,7 +56,7 @@ pub mod tests {
             let diff = (ret - w).abs();
             assert!(
                 diff <= f32::EPSILON,
-                "Value not match, ret = {ret}, w = {w}"
+                "Value not match, r = {r}\nret = {ret}, w = {w}"
             );
         })
     }
@@ -63,7 +67,7 @@ pub mod tests {
             let diff = (ret - w).abs();
             assert!(
                 diff <= f32::EPSILON,
-                "Value not match, ret = {ret}, w = {w}"
+                "Value not match, r = {r}\nret = {ret}, w = {w}"
             );
         })
     }
