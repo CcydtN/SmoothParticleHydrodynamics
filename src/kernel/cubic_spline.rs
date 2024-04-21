@@ -94,6 +94,7 @@ mod tests {
             (1.4, -0.0859436692696235).into(),
             (1.6, -0.0381971863420549).into(),
             (1.8, -0.00954929658551372).into(),
+            (2.0, 0.).into(),
         ];
         let kernel = CubicSpline::new(1.);
         tests::check_gradient(kernel, &values);
@@ -112,6 +113,7 @@ mod tests {
             (1.4, 0.286478897565412).into(),
             (1.6, 0.190985931710274).into(),
             (1.8, 0.0954929658551372).into(),
+            (2.0, 0.).into(),
         ];
         let kernel = CubicSpline::new(1.);
         tests::check_lapcian(kernel, &values);
