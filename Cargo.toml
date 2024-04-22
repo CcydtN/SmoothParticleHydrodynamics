@@ -18,3 +18,5 @@ macroquad = "0.4"
 uom = "0.35.0"
 rayon = "*"
 itertools = "0.12.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
