@@ -28,26 +28,24 @@ impl<T: kernel::Kernel> Simple<T> {
     ) -> Vec<Vec3> {
         assert_eq!(position.len(), density.len());
         let n = position.len();
-        let p_func = |d| self.k * (d - self.rest_density);
+        let p_func = |d| self.k * d;
         let p = density.iter().map(p_func).collect::<Vec<_>>();
 
         let mut pressure = vec![];
         for i in 0..n {
-            let mut tmp = vec3(0., 0., 0.);
+            let mut tmp = Vec3::ZERO;
             for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
                 if i == j {
                     continue;
                 }
                 let gradient = self.kernel.gradient(position[i] - position[j]);
-                let force =
-                    -self.mass * (p[i] / density[i].powi(2) + p[j] / density[j].powi(2)) * gradient
-                        / density[i];
+                let force = -self.mass * (p[i] + p[j]) / density[j].powi(2) * gradient;
                 if force.is_nan() {
                     continue;
                 }
                 tmp += force;
             }
-            pressure.push(tmp);
+            pressure.push(tmp / density[i]);
         }
         pressure.iter().for_each(|p| assert!(!p.is_nan()));
         pressure
@@ -64,11 +62,11 @@ mod tests {
     #[test]
     fn pressure_repulsion_test() {
         let h = 5.;
-        let kernel = kernel::Spiky::new(h);
+        let kernel = kernel::Poly6::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Simple::new(kernel, mass, 100.0, 1.);
+        let pressure_model = Simple::new(kernel, mass, 100.0, 0.5);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
@@ -76,7 +74,8 @@ mod tests {
         let density = density_model.compute(&grid, &position);
         let pressure = pressure_model.compute_accelraction(&grid, &position, &density);
 
-        assert!(pressure[1].distance(Vec3::ZERO) <= 0.999);
+        dbg!(&pressure);
+        assert_eq!(pressure[1].length(), 0.0);
         assert_eq!(pressure[0].cross(vec3(-1., -1., -1.)), Vec3::ZERO);
         assert_eq!(pressure[2].cross(vec3(1., 1., 1.)), Vec3::ZERO);
     }
@@ -85,11 +84,11 @@ mod tests {
     #[test]
     fn pressure_attraction_test() {
         let h = 5.;
-        let kernel = kernel::Spiky::new(h);
+        let kernel = kernel::Poly6::new(h);
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Simple::new(kernel, mass, 100.0, 1.);
+        let pressure_model = Simple::new(kernel, mass, 100.0, 2.);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
@@ -97,7 +96,8 @@ mod tests {
         let density = density_model.compute(&grid, &position);
         let pressure = pressure_model.compute_accelraction(&grid, &position, &density);
 
-        assert!(pressure[1].distance(Vec3::ZERO) <= 0.999);
+        dbg!(&pressure);
+        assert_eq!(pressure[1].length(), 0.0);
         assert_eq!(pressure[0].cross(vec3(1., 1., 1.)), Vec3::ZERO);
         assert_eq!(pressure[2].cross(vec3(-1., -1., -1.)), Vec3::ZERO);
     }
