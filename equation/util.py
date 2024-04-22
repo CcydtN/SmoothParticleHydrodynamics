@@ -7,15 +7,35 @@ def get_derivatives(func, variable):
     l = simplify(diff(diff(func, variable), variable))
     return f,g,l
 
-# Always start with 0, step 0.2, inclusive end
-def sampling(func, grad, lapl, variable, inclusive_end, h, file_name = None):
-    arange = lambda start, stop, step: [step * i for i in range(int((stop - start) / step))]
+def custom_range(start, end, step_count):
+    step = (end - start) / step_count
+    for i in range(step_count):
+        yield i*step + start
+
+def evaluate(func, variable, start, end, count):
+    ret = []
+    for i in custom_range(start, end, count):
+        tmp = func.subs(variable, i)
+        try:
+            ret.append((i, float(tmp)))
+        except:
+            continue
+    return ret
+
+
+# Always give 10 sample between [0, end], unless the result is inf of NaN
+def sampling(func, grad, lapl, variable, end, h, file_name = None):
+    sampling_count = 10
+
+    f = evaluate(func, variable, 0, end, sampling_count)
+    g = evaluate(grad, variable, 0, end, sampling_count)
+    l = evaluate(lapl, variable, 0, end, sampling_count)
 
     sample = {
         "h_value": h,
-        "function": [(i, float(func.subs([(variable, i)]))) for i in arange(0, inclusive_end, 0.2)],
-        "gradient": [(i, float(grad.subs([(variable, i)]))) for i in arange(0, inclusive_end, 0.2)],
-        "laplacian": [(i, float(lapl.subs([(variable, i)]))) for i in arange(0, inclusive_end, 0.2)],
+        "function": f,
+        "gradient": g,
+        "laplacian": l,
     }
 
     if file_name is not None:
