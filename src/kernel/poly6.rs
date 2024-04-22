@@ -1,6 +1,5 @@
-use std::f32::consts::PI;
-
 use crate::kernel::definition::KernelImpl;
+use std::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Poly6 {
@@ -47,36 +46,39 @@ impl KernelImpl for Poly6 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::definition::tests;
+    #[macro_use]
     use super::*;
+    use super::super::tests_helper;
     use std::path::PathBuf;
 
     const FILE_PATH: &str = "equation/samples/poly6.json";
+    type TestKernel = Poly6;
+
     #[test]
     fn verify_function() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push(FILE_PATH);
-        let data = tests::TestData::new(&path);
+        let data = tests_helper::TestData::new(&path);
         let values = data.get_function();
-        let kernel = Poly6::new(data.get_h());
-        tests::check_function(kernel, &values);
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_function(kernel, &values);
     }
     #[test]
     fn verify_gradient() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push(FILE_PATH);
-        let data = tests::TestData::new(&path);
+        let data = tests_helper::TestData::new(&path);
         let values = data.get_gradient();
-        let kernel = Poly6::new(data.get_h());
-        tests::check_gradient(kernel, &values);
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_gradient(kernel, &values);
     }
     #[test]
     fn verify_laplacian() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push(FILE_PATH);
-        let data = tests::TestData::new(&path);
+        let data = tests_helper::TestData::new(&path);
         let values = data.get_laplacian();
-        let kernel = Poly6::new(data.get_h());
-        tests::check_lapcian(kernel, &values);
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_lapcian(kernel, &values);
     }
 }
