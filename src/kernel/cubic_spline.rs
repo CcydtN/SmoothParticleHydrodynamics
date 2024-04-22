@@ -59,63 +59,38 @@ impl KernelImpl for CubicSpline {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests_helper;
     use super::*;
-    use crate::kernel::definition::tests;
+    use std::path::PathBuf;
+
+    const FILE_PATH: &str = "equation/samples/cubic_spline.json";
+    type TestKernel = CubicSpline;
 
     #[test]
     fn verify_function() {
-        let function_values = [
-            (0.0, 0.318309886183791).into(),
-            (0.2, 0.301121152329866).into(),
-            (0.4, 0.257194388036503).into(),
-            (0.6, 0.197988749206318).into(),
-            (0.8, 0.134963391741927).into(),
-            (1.0, 0.0795774715459477).into(),
-            (1.2, 0.0407436654315252).into(),
-            (1.4, 0.0171887338539247).into(),
-            (1.6, 0.00509295817894065).into(),
-            (1.8, 0.000636619772367581).into(),
-            (2.0, 0.).into(),
-        ];
-        let kernel = CubicSpline::new(1.);
-        tests::check_function(kernel, &function_values);
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_function();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_function(kernel, &values);
     }
-
     #[test]
     fn verify_gradient() {
-        let values = [
-            (0.0, 0.).into(),
-            (0.2, -0.162338041953733).into(),
-            (0.4, -0.267380304394384).into(),
-            (0.6000000000000001, -0.315126787321953).into(),
-            (0.8, -0.305577490736439).into(),
-            (1.0, -0.238732414637843).into(),
-            (1.2, -0.152788745368220).into(),
-            (1.4, -0.0859436692696235).into(),
-            (1.6, -0.0381971863420549).into(),
-            (1.8, -0.00954929658551372).into(),
-            (2.0, 0.).into(),
-        ];
-        let kernel = CubicSpline::new(1.);
-        tests::check_gradient(kernel, &values);
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_gradient();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_gradient(kernel, &values);
     }
-
     #[test]
-    fn verify_lapcian() {
-        let values = [
-            (0.0, -0.954929658551372).into(),
-            (0.2, -0.668450760985960).into(),
-            (0.4, -0.381971863420549).into(),
-            (0.6000000000000001, -0.0954929658551371).into(),
-            (0.8, 0.190985931710274).into(),
-            (1.0, 0.477464829275686).into(),
-            (1.2, 0.381971863420549).into(),
-            (1.4, 0.286478897565412).into(),
-            (1.6, 0.190985931710274).into(),
-            (1.8, 0.0954929658551372).into(),
-            (2.0, 0.).into(),
-        ];
-        let kernel = CubicSpline::new(1.);
-        tests::check_lapcian(kernel, &values);
+    fn verify_laplacian() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_laplacian();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_lapcian(kernel, &values);
     }
 }

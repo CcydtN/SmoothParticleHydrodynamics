@@ -44,3 +44,41 @@ impl KernelImpl for Spiky {
         6. * (self.h - r) / self.volume
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::tests_helper;
+    use super::*;
+    use std::path::PathBuf;
+
+    const FILE_PATH: &str = "equation/samples/spiky.json";
+    type TestKernel = Spiky;
+
+    #[test]
+    fn verify_function() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_function();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_function(kernel, &values);
+    }
+    #[test]
+    fn verify_gradient() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_gradient();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_gradient(kernel, &values);
+    }
+    #[test]
+    fn verify_laplacian() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push(FILE_PATH);
+        let data = tests_helper::TestData::new(&path);
+        let values = data.get_laplacian();
+        let kernel = TestKernel::new(data.get_h());
+        tests_helper::check_lapcian(kernel, &values);
+    }
+}

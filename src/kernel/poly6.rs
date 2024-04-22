@@ -46,9 +46,8 @@ impl KernelImpl for Poly6 {
 
 #[cfg(test)]
 mod tests {
-    #[macro_use]
-    use super::*;
     use super::super::tests_helper;
+    use super::*;
     use std::path::PathBuf;
 
     const FILE_PATH: &str = "equation/samples/poly6.json";
