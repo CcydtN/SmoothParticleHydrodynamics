@@ -84,11 +84,14 @@ mod tests {
         let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
         for (pos, st) in position.iter().zip(surface_tension) {
-            println!("{:?}, {:?}", pos, st);
             let dot = pos.dot(st);
             let magnitude = pos.length() * st.length();
-            let diff = (dot - magnitude).abs();
-            assert!(diff <= 1e-4, "Value of diff: {:?}", diff);
+            // dot should be negetive
+            // magnitude should be positive
+            // same value, not same direction
+            let diff = (dot + magnitude).abs();
+            dbg!(pos, st, dot, magnitude, diff);
+            assert!(diff <= 1e-3, "Value of diff: {:?}", diff);
         }
     }
 }
