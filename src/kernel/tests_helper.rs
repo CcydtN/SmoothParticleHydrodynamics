@@ -71,13 +71,16 @@ impl TestData {
 
 macro_rules! check_impl {
     ( $function_name:ident, $call_function:ident ) => {
-        pub fn $function_name(kernel: impl KernelImpl, values: &[Value]) {
+        pub fn $function_name(kernel: impl KernelImpl + Debug, values: &[Value]) {
             values.iter().for_each(|Value { r, w }| {
                 let ret = kernel.$call_function(*r);
-                let diff = (ret - w).abs();
-                assert!(
-                    diff <= f32::EPSILON,
-                    "Value not match, r = {r}\nret = {ret}, w = {w}"
+                // 3 decimal places precision
+                let factor = 10f32.powi(3);
+                let ret_ = (ret * factor).trunc();
+                let w_ = (w * factor).trunc();
+                assert_eq!(
+                    ret_, w_,
+                    "Value not match, r = {r}\nret = {ret}, w = {w}, {kernel:?}"
                 );
             })
         }

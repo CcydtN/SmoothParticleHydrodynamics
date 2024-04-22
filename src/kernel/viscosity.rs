@@ -1,5 +1,7 @@
 use std::f32::consts::PI;
 
+use uom::ConversionFactor;
+
 use crate::kernel::Kernel;
 
 use super::definition::KernelImpl;
@@ -12,7 +14,8 @@ pub struct Viscosity {
 
 impl Viscosity {
     pub fn new(h: f32) -> Self {
-        let volume = 2. * PI * h.powi(3) / 15.;
+        // let volume = 2. * PI * h.powi(3) / 15.;
+        let volume = 2. * PI / 15.;
         Self { h, volume }
     }
 }
@@ -27,8 +30,12 @@ impl KernelImpl for Viscosity {
         if r > self.h {
             return 0.;
         }
-        (-r.powi(3) / 2. * self.h.powi(3) + (r / self.h).powi(2) + (self.h / (2. * r)) - 1.)
-            / self.volume
+        let value = (self.h.powi(4) / 2. - self.h.powi(3) * r + self.h * r.powi(3)
+            - r.powi(4) / 2.)
+            / (self.h.powi(6) * r);
+        value / self.volume
+        // (-r.powi(3) / 2. * self.h.powi(3) + (r / self.h).powi(2) + (self.h / (2. * r)) - 1.)
+        // / self.volume
     }
 
     fn gradient_impl(&self, r: f32) -> f32 {
@@ -36,8 +43,9 @@ impl KernelImpl for Viscosity {
         if r > self.h {
             return 0.;
         }
-        (-self.h.powi(4) + 4. * self.h * r.powi(3) - 3. * r.powi(4))
-            / (r.powi(2) * self.h.powi(3) * 2. * self.volume)
+        let value = (-self.h.powi(4) + 4. * self.h * r.powi(3) - 3. * r.powi(4))
+            / (2. * r.powi(2) * self.h.powi(6));
+        value / self.volume
     }
 
     fn lapacian_impl(&self, r: f32) -> f32 {
@@ -45,7 +53,9 @@ impl KernelImpl for Viscosity {
         if r > self.h {
             return 0.;
         }
-        (self.h / r.powi(3) + 2. / self.h.powi(2) - 3. * r / self.h.powi(3)) / self.volume
+        let value =
+            (1. / (self.h.powi(2) * r.powi(3)) + 2. / self.h.powi(5) - 3. * r / self.h.powi(6));
+        value / self.volume
     }
 }
 
