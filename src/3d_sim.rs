@@ -103,7 +103,7 @@ async fn main() {
 
     dbg!(time_step);
     loop {
-        // dbg!(t);
+        dbg!(t);
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
         let pressure_acc = pressure_model.compute_accelraction(&grid, &position, &density);
@@ -140,9 +140,9 @@ async fn main() {
 
         t += time_step;
         // for profiling
-        if t >= 2. {
-            break;
-        }
+        // if t >= 2. {
+        //     break;
+        // }
     }
 }
 
@@ -157,7 +157,6 @@ async fn rendering(
     let pos = vec3((t).cos(), (t / 3.).sin(), (t / 2.).cos()).normalize();
 
     let lerp = |a: Color, b: Color, c: Color, t: f32| {
-        let t = t / base_dist;
         let inv_t = 1.0 - t;
         Color {
             r: ((a.r * inv_t.powi(2)) + (2. * b.r * t * inv_t) + (c.r * t.powi(2))),
@@ -171,8 +170,12 @@ async fn rendering(
         target: vec3(0., 0., 0.),
         ..Default::default()
     });
+    draw_line_3d(Vec3::ZERO, Vec3::X, RED);
+    draw_line_3d(Vec3::ZERO, Vec3::Y, BLUE);
+    draw_line_3d(Vec3::ZERO, Vec3::Z, GREEN);
     for &pos in position {
-        let color = lerp(LIME, YELLOW, ORANGE, pos.length());
+        let t = (pos.length() / base_dist).clamp(0., 1.);
+        let color = lerp(LIME, YELLOW, ORANGE, t);
         draw_sphere_wires(pos, spacing / 8., None, color);
     }
     next_frame().await;
