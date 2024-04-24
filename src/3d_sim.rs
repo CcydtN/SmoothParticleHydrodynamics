@@ -3,37 +3,29 @@ mod model;
 mod util_3d;
 
 use itertools::{iproduct, izip};
-use macroquad::prelude::*;
+use macroquad::{color::Color, prelude::*};
 use model::{density::Density, pressure, surface_tension, viscosity};
-use uom::si::{
-    dynamic_viscosity,
-    f32::{DynamicViscosity, MassDensity, MolarMass},
-    mass_density, molar_mass,
-};
+use uom::si::{f32::MassDensity, mass_density};
 use util_3d::*;
 
 struct Material {
     density: MassDensity,
-    viscosity: DynamicViscosity,
-    molar_mass: MolarMass,
+    viscosity: f32,
     surface_tension: f32,
 }
 
 impl Material {
     fn get_density(&self) -> f32 {
-        self.density.get::<mass_density::kilogram_per_cubic_meter>()
+        self.density
+            .get::<mass_density::gram_per_cubic_centimeter>()
     }
 
     fn get_viscosity(&self) -> f32 {
-        self.viscosity.get::<dynamic_viscosity::pascal_second>()
+        self.viscosity
     }
 
     fn get_surface_tension(&self) -> f32 {
         self.surface_tension
-    }
-
-    fn get_molar_mass(&self) -> f32 {
-        self.molar_mass.get::<molar_mass::kilogram_per_mole>()
     }
 }
 
@@ -42,24 +34,24 @@ async fn main() {
     // Constant for water
     let water = Material {
         density: MassDensity::new::<mass_density::kilogram_per_cubic_meter>(1000.),
-        molar_mass: MolarMass::new::<molar_mass::gram_per_mole>(18.),
-        viscosity: DynamicViscosity::new::<dynamic_viscosity::micropascal_second>(1.),
-        surface_tension: 100. / 1000.,
+        viscosity: 100.,
+        surface_tension: 75.,
     };
 
     let rest_density = water.get_density();
-    let pressure_constant = 1000.;
+    let pressure_constant = 100.;
     let viscosity_constant = water.get_viscosity();
     let surface_tension_coefficient = water.get_surface_tension();
+    let gravity = 9.81 * 10.;
 
-    let mass = 1. / 1000.; //1 gram or 0.001 kg
-    let particle_per_side = 10i32;
+    let mass = 1.;
+    let particle_per_side = 12i32;
     let particle_count = particle_per_side.pow(3); // total 1000;
     let total_mass = mass * particle_count as f32;
     let spacing = (total_mass / rest_density).powf(1. / 3.) / particle_per_side as f32;
 
     // nice to have around 25-80 particle in the radius, which is between [3,4) (27 - 64 in count)
-    let kernel_radius = 64f32.powf(1. / 3.) * spacing;
+    let kernel_radius = 27f32.powf(1. / 3.) * spacing;
 
     dbg!(total_mass, spacing, kernel_radius);
 
@@ -69,9 +61,9 @@ async fn main() {
     for (i, j, k) in iproduct!(-offset..offset, -offset..offset, -offset..offset) {
         position.push(
             vec3(
-                spacing * (i as f32 + 0.5),
-                spacing * (j as f32 + 0.5),
-                spacing * (k as f32 + 0.5),
+                spacing * (i as f32 + 0.5 * ((particle_per_side + 1) % 2) as f32),
+                spacing * (j as f32 + 0.5 * ((particle_per_side + 1) % 2) as f32),
+                spacing * (k as f32 + 0.5 * ((particle_per_side + 1) % 2) as f32),
             ) * 1.0,
         );
     }
@@ -80,31 +72,38 @@ async fn main() {
     let spiky_kernel = kernel::Spiky::new(kernel_radius);
     let viscosity_kernel = kernel::Viscosity::new(kernel_radius);
     let cubic_spline = kernel::CubicSpline::new(kernel_radius);
+    let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
+
+    // let density_model = Density::new(poly6_kernel, mass);
+    // let pressure_model = pressure::Simple::new(spiky_kernel, mass, pressure_constant, rest_density);
+    // let viscoity_model = viscosity::Simple::new(viscosity_kernel, mass, viscosity_constant);
+    // let surface_tension_model =
+    // surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
 
     let density_model = Density::new(cubic_spline, mass);
-    // let pressure_model = pressure::Simple::new(spiky_kernel, mass, pressure_constant, rest_density);
-    let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, 0.5, 9.81);
-    // let viscoity_model = viscosity::Simple::new(viscosity_kernel, mass, viscosity_constant);
-    let speed_sound = f32::sqrt(200. * 9.81 * 0.5);
-    let viscoity_model = viscosity::Artificial::new(cubic_spline, mass, speed_sound);
-    let surface_tension_model =
-        surface_tension::SurfaceTension::new(poly6_kernel, surface_tension_coefficient, mass);
-    // let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
+    let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
+    let viscoity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
+    let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
     let mut grid = SpatialHashGrid::new(kernel_radius);
 
     // grid.update(&position);
     // let density = density_model.compute(&grid, &position);
     // dbg!(density);
-    // dbg!(density_model);
-    // dbg!(cubic_spline);
-    // dbg!(poly6_kernel);
     // return;
 
-    let time_step = 1. / 10000.;
-    // let time_step = 1. / 2000.;
+    // let time_step = 1. / 10000.;
+    // let time_step = 1. / 1000.;
+    // let time_step = 1. / 100.;
+    let time_step = 0.4 * kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
     let mut t: f32 = 0.;
+
+    let mut next_render = std::time::Instant::now();
+    let frame_period = ((1. / 30.) * 1000.) as u128;
+
+    dbg!(time_step);
     loop {
+        // dbg!(t);
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
         let pressure_acc = pressure_model.compute_accelraction(&grid, &position, &density);
@@ -129,21 +128,33 @@ async fn main() {
             *v += a * time_step / 2.;
         });
 
-        clear_background(WHITE);
-        let base_dist = spacing * particle_per_side as f32;
-        set_camera(&Camera3D {
-            position: vec3(
-                base_dist,
-                spacing * particle_per_side as f32 * 3.,
-                base_dist,
-            ),
-            target: vec3(0., 0., 0.),
-            ..Default::default()
-        });
-        for &pos in &position {
-            draw_sphere_wires(pos, spacing / 8., None, SKYBLUE);
+        if next_render.elapsed().as_millis() >= frame_period {
+            clear_background(WHITE);
+            let base_dist = spacing * particle_per_side as f32;
+            let pos = vec3((t).cos(), (t / 3.).sin(), (t / 2.).cos()).normalize();
+
+            let lerp = |a: Color, b: Color, c: Color, t: f32| {
+                let t = t / base_dist;
+                let inv_t = 1.0 - t;
+                Color {
+                    r: ((a.r * inv_t.powi(2)) + (2. * b.r * t * inv_t) + (c.r * t.powi(2))),
+                    g: ((a.g * inv_t.powi(2)) + (2. * b.g * t * inv_t) + (c.g * t.powi(2))),
+                    b: ((a.b * inv_t.powi(2)) + (2. * b.b * t * inv_t) + (c.b * t.powi(2))),
+                    a: 1.0,
+                }
+            };
+            set_camera(&Camera3D {
+                position: pos * 2. * base_dist,
+                target: vec3(0., 0., 0.),
+                ..Default::default()
+            });
+            for &pos in &position {
+                let color = lerp(LIME, YELLOW, ORANGE, pos.length());
+                draw_sphere_wires(pos, spacing / 8., None, color);
+            }
+            next_render = std::time::Instant::now();
+            next_frame().await;
         }
-        next_frame().await;
         t += time_step;
     }
 }

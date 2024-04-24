@@ -24,20 +24,17 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
             let mut color_field_lapacian = Vec3::ZERO;
             let mut sum = Vec3::ZERO;
             for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
-                if i == j {
-                    continue;
-                }
                 let r = position[i] - position[j];
                 color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
-                color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
+                color_field_lapacian += self.mass * self.kernel.laplacian(r) / density[j];
                 sum += self.mass * self.kernel.function(r) * r;
             }
-            let n = color_field_gradient;
-            if n.length() == 0. {
+            let n = color_field_gradient.length();
+            if n <= f32::EPSILON {
                 accelration.push(Vec3::ZERO);
                 continue;
             }
-            let kappa = -color_field_lapacian.length() / n.length();
+            let kappa = -color_field_lapacian.length_squared() / n;
             accelration.push(kappa / self.mass * sum);
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));

@@ -19,7 +19,7 @@ impl<T: kernel::Kernel> Artificial<T> {
             kernel,
             mass,
             speed_sound,
-            alpha: 0.1,
+            alpha: 0.2,
         }
     }
 
@@ -30,26 +30,20 @@ impl<T: kernel::Kernel> Artificial<T> {
         velocity: &Vec<Vec3>,
         density: &Vec<f32>,
     ) -> Vec<Vec3> {
-        let pi_ab =
-            |&pos_a: &Vec3, &pos_b: &Vec3, &v_a: &Vec3, &v_b: &Vec3, d_a: &f32, d_b: f32| -> f32 {
-                let x = pos_a - pos_b;
-                let v = v_a - v_b;
-                let h = pos_a.y - pos_b.y;
-                let numerator = x.dot(v);
-                let denominator = x.length_squared() + 0.01 * h.powi(2);
-                let constant = self.alpha * h.abs() * self.speed_sound.abs() / (d_a + d_b);
-                numerator / denominator * constant
-            };
+        let pi_ab = |&r: &Vec3, &v_a: &Vec3, &v_b: &Vec3, d_a: &f32, d_b: f32| -> f32 {
+            let v = v_a - v_b;
+            let h = self.kernel.support_radius();
+            let numerator = r.dot(v);
+            let denominator = r.length_squared() + 0.01 * h.powi(2);
+            let constant = (2. * self.alpha * h * self.speed_sound) / (d_a + d_b);
+            -constant * numerator / denominator
+        };
+
         let viscosity = |((pos, v), d)| {
             grid.lookup(pos, self.kernel.support_radius())
                 .map(|&j| {
                     let r = *pos - position[j];
-                    if r == Vec3::ZERO {
-                        return r;
-                    }
-                    -self.mass
-                        * pi_ab(pos, &position[j], v, &velocity[j], d, density[j])
-                        * self.kernel.gradient(r)
+                    -self.mass * pi_ab(&r, v, &velocity[j], d, density[j]) * self.kernel.gradient(r)
                 })
                 .fold(Vec3::ZERO, |a, b| a + b)
         };

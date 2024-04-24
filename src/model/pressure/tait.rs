@@ -13,17 +13,8 @@ pub struct Tait<T: Kernel> {
 }
 
 impl<T: Kernel + std::fmt::Debug> Tait<T> {
-    pub fn new(
-        kernel: T,
-        mass: f32,
-        rest_density: f32,
-        gamma: i32,
-        height: f32,
-        gravity: f32,
-    ) -> Self {
-        let max_v_sq = 2. * gravity * height;
-        let speed_of_flow_sq = 100. * max_v_sq;
-        let pressure_constant = rest_density * speed_of_flow_sq / (gamma as f32);
+    pub fn new(kernel: T, mass: f32, rest_density: f32, gamma: i32, speed_of_sound: f32) -> Self {
+        let pressure_constant = rest_density * (10. * speed_of_sound) / (gamma as f32);
         Self {
             kernel,
             mass,
@@ -78,7 +69,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 1., 9.81);
+        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 2. * 9.81);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
@@ -99,7 +90,7 @@ mod tests {
         let mass = 1.;
 
         let density_model = Density::new(kernel, mass);
-        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 1., 9.81);
+        let pressure_model = Tait::new(kernel, mass, 100.0, 7, 2. * 9.81);
         let mut grid = SpatialHashGrid::new(h);
 
         let position = vec![vec3(0., 0., 0.), vec3(0.5, 0.5, 0.5), vec3(1., 1., 1.)];
