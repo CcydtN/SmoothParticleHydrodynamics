@@ -128,33 +128,48 @@ async fn main() {
             *v += a * time_step / 2.;
         });
 
+        #[cfg(feature = "rendering")]
         if next_render.elapsed().as_millis() >= frame_period {
-            clear_background(WHITE);
-            let base_dist = spacing * particle_per_side as f32;
-            let pos = vec3((t).cos(), (t / 3.).sin(), (t / 2.).cos()).normalize();
-
-            let lerp = |a: Color, b: Color, c: Color, t: f32| {
-                let t = t / base_dist;
-                let inv_t = 1.0 - t;
-                Color {
-                    r: ((a.r * inv_t.powi(2)) + (2. * b.r * t * inv_t) + (c.r * t.powi(2))),
-                    g: ((a.g * inv_t.powi(2)) + (2. * b.g * t * inv_t) + (c.g * t.powi(2))),
-                    b: ((a.b * inv_t.powi(2)) + (2. * b.b * t * inv_t) + (c.b * t.powi(2))),
-                    a: 1.0,
-                }
-            };
-            set_camera(&Camera3D {
-                position: pos * 2. * base_dist,
-                target: vec3(0., 0., 0.),
-                ..Default::default()
-            });
-            for &pos in &position {
-                let color = lerp(LIME, YELLOW, ORANGE, pos.length());
-                draw_sphere_wires(pos, spacing / 8., None, color);
-            }
-            next_render = std::time::Instant::now();
-            next_frame().await;
+            next_render = rendering(spacing, particle_per_side, t, &position).await;
         }
+
         t += time_step;
+        // for profiling
+        if t >= 2. {
+            break;
+        }
     }
+}
+
+async fn rendering(
+    spacing: f32,
+    particle_per_side: i32,
+    t: f32,
+    position: &Vec<Vec3>,
+) -> std::time::Instant {
+    clear_background(WHITE);
+    let base_dist = spacing * particle_per_side as f32;
+    let pos = vec3((t).cos(), (t / 3.).sin(), (t / 2.).cos()).normalize();
+
+    let lerp = |a: Color, b: Color, c: Color, t: f32| {
+        let t = t / base_dist;
+        let inv_t = 1.0 - t;
+        Color {
+            r: ((a.r * inv_t.powi(2)) + (2. * b.r * t * inv_t) + (c.r * t.powi(2))),
+            g: ((a.g * inv_t.powi(2)) + (2. * b.g * t * inv_t) + (c.g * t.powi(2))),
+            b: ((a.b * inv_t.powi(2)) + (2. * b.b * t * inv_t) + (c.b * t.powi(2))),
+            a: 1.0,
+        }
+    };
+    set_camera(&Camera3D {
+        position: pos * 2. * base_dist,
+        target: vec3(0., 0., 0.),
+        ..Default::default()
+    });
+    for &pos in position {
+        let color = lerp(LIME, YELLOW, ORANGE, pos.length());
+        draw_sphere_wires(pos, spacing / 8., None, color);
+    }
+    next_frame().await;
+    std::time::Instant::now()
 }
