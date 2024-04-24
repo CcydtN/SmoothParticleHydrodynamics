@@ -107,8 +107,13 @@ async fn main() {
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
         let pressure_acc = pressure_model.compute_accelraction(&grid, &position, &density);
-        let viscosity_acc =
-            viscoity_model.compute_accelration(&grid, &position, &velocity, &density);
+        let viscosity_acc = viscoity_model.compute_accelration(
+            &grid,
+            &position,
+            &velocity,
+            &density,
+            kernel_radius,
+        );
         let surface_tension_acc =
             surface_tension_model.compute_accelration(&grid, &position, &density);
 
