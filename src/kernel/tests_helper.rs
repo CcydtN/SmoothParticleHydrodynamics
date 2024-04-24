@@ -89,7 +89,7 @@ macro_rules! check_impl {
 
 check_impl!(check_function, function_impl);
 check_impl!(check_gradient, gradient_impl);
-check_impl!(check_lapcian, lapacian_impl);
+check_impl!(check_lapcian, laplacian_impl);
 
 #[macro_export]
 macro_rules! tests_impl {

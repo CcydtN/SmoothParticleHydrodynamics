@@ -43,7 +43,7 @@ impl KernelImpl for CubicSpline {
         value / self.volume
     }
 
-    fn lapacian_impl(&self, r: f32) -> f32 {
+    fn laplacian_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => 6. * (-2. * self.h + 3. * r) / self.h.powi(3),

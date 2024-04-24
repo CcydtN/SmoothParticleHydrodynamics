@@ -36,7 +36,7 @@ impl KernelImpl for Spiky {
         -3. * (self.h - r).powi(2) / self.volume
     }
 
-    fn lapacian_impl(&self, r: f32) -> f32 {
+    fn laplacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

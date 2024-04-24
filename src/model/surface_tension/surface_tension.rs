@@ -28,24 +28,25 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
             let mut color_field_gradient = Vec3::ZERO;
             let mut color_field_lapacian = Vec3::ZERO;
             for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
-                if i == j {
-                    continue;
-                }
                 let r = position[i] - position[j];
-                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
-                color_field_lapacian += self.mass * self.kernel.lapacian(r) / density[j];
+                color_field_gradient += self.mass / density[j] * self.kernel.gradient(r);
+                color_field_lapacian += self.mass / density[j] * self.kernel.laplacian(r);
             }
             if color_field_gradient.is_nan() {
                 panic!()
             }
+            let n = color_field_gradient.length();
+            if n <= 0.7 {
+                accelration.push(Vec3::ZERO);
+                continue;
+            }
             accelration.push(
-                self.surface_tension_coefficient
-                    * color_field_lapacian.length()
-                    * color_field_gradient.normalize()
-                    / density[i],
+                self.surface_tension_coefficient / density[i]
+                    * color_field_lapacian.length_squared()
+                    * color_field_gradient.normalize_or_zero(),
             );
         }
-        accelration.iter().for_each(|p| assert!(!p.is_nan()));
+        accelration.iter().for_each(|p| assert!(p.is_finite()));
         accelration
     }
 }

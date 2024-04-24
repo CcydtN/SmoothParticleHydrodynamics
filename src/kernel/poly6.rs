@@ -35,7 +35,7 @@ impl KernelImpl for Poly6 {
         -6. * r * (self.h.powi(2) - r.powi(2)).powi(2) / self.volume
     }
 
-    fn lapacian_impl(&self, r: f32) -> f32 {
+    fn laplacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

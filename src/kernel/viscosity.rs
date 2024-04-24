@@ -48,7 +48,7 @@ impl KernelImpl for Viscosity {
         value / self.volume
     }
 
-    fn lapacian_impl(&self, r: f32) -> f32 {
+    fn laplacian_impl(&self, r: f32) -> f32 {
         assert!(r >= 0.0);
         if r > self.h {
             return 0.;

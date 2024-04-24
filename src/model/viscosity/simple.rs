@@ -28,11 +28,8 @@ impl<T: kernel::Kernel> Simple<T> {
         for i in 0..position.len() {
             let mut sum = Vec3::ZERO;
             for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
-                if i == j {
-                    continue;
-                }
                 sum += self.mass * (velocity[j] - velocity[i]) / density[j]
-                    * self.kernel.lapacian(position[i] - position[j]);
+                    * self.kernel.laplacian(position[i] - position[j]);
             }
             force.push(sum * self.viscosity_constant / density[i]);
         }
