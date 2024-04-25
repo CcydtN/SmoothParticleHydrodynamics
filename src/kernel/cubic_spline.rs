@@ -4,13 +4,16 @@ use std::f32::consts::PI;
 #[derive(Debug, Clone, Copy)]
 pub struct CubicSpline {
     h: f32,
-    volume: f32,
+    constant: f32,
 }
 
 impl CubicSpline {
     pub fn new(h: f32) -> Self {
         let volume = 4. * h.powi(3) * PI;
-        Self { h, volume }
+        Self {
+            h,
+            constant: 1. / volume,
+        }
     }
 }
 
@@ -23,34 +26,34 @@ impl KernelImpl for CubicSpline {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
             x if x <= self.h => {
-                (-4. * (self.h - r).powi(3) + (2. * self.h - r).powi(3)) / self.h.powi(3)
+                (-4. * (self.h - r).powi(3) + (2. * self.h - r).powi(3)) * self.h.powi(-3)
             }
-            x if x <= 2. * self.h => (2. * self.h - r).powi(3) / self.h.powi(3),
+            x if x <= 2. * self.h => (2. * self.h - r).powi(3) * self.h.powi(-3),
             _ => 0.,
         };
-        value / self.volume
+        value * self.constant
     }
 
     fn gradient_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = if r <= self.h {
-            3. * r * (-4. * self.h + 3. * r) / self.h.powi(3)
+            3. * r * (-4. * self.h + 3. * r) * self.h.powi(-3)
         } else if r <= 2. * self.h {
-            -3. * (2. * self.h - r).powi(2) / self.h.powi(3)
+            -3. * (2. * self.h - r).powi(2) * self.h.powi(-3)
         } else {
             0.
         };
-        value / self.volume
+        value * self.constant
     }
 
     fn laplacian_impl(&self, r: f32) -> f32 {
         debug_assert!(r >= 0.0, "value of r: {}", r);
         let value = match r {
-            x if x <= self.h => 6. * (-2. * self.h + 3. * r) / self.h.powi(3),
-            x if x <= 2. * self.h => 6. * (2. * self.h - r) / self.h.powi(3),
+            x if x <= self.h => 6. * (-2. * self.h + 3. * r) * self.h.powi(-3),
+            x if x <= 2. * self.h => 6. * (2. * self.h - r) * self.h.powi(-3),
             _ => 0.,
         };
-        value / self.volume
+        value * self.constant
     }
 }
 

@@ -140,9 +140,9 @@ async fn main() {
 
         t += time_step;
         // for profiling
-        // if t >= 2. {
-        //     break;
-        // }
+        if t >= 2. {
+            break;
+        }
     }
 }
 
