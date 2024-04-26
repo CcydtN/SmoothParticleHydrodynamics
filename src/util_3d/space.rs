@@ -1,5 +1,5 @@
 use itertools::{iproduct, Itertools};
-use std::{collections::HashMap, iter};
+use std::{collections::HashMap, iter, ops::Deref};
 
 use crate::kernel;
 
@@ -12,6 +12,7 @@ pub struct Space {
     grid_size: f32,
     table: HashMap<Key, Vec<Particle>>,
     update_count: usize,
+    particle_count: usize,
 }
 
 #[inline]
@@ -20,14 +21,12 @@ fn hash(grid_size: f32, particle: &Particle) -> Key {
 }
 
 impl Space {
-    pub fn new<T>(grid_size: f32, particles: T) -> Self
-    where
-        T: IntoIterator<Item = Particle>,
-    {
+    pub fn new(grid_size: f32, particles: Vec<Particle>) -> Self {
         let mut obj = Self {
             grid_size,
             ..Default::default()
         };
+        obj.particle_count += particles.len();
         obj.table = particles
             .into_iter()
             .into_group_map_by(|v| hash(grid_size, v));
@@ -35,18 +34,21 @@ impl Space {
     }
 
     #[inline]
-    pub fn add_one(&mut self, particle: Particle) {
+    fn add(&mut self, particle: Particle) {
         let key = hash(self.grid_size, &particle);
-        let entry = self.table.entry(key).or_default();
-        entry.push(particle);
+        self.table.entry(key).or_default().push(particle)
     }
 
     #[inline]
-    pub fn add_bulk<T>(&mut self, particles: T)
-    where
-        T: IntoIterator<Item = Particle>,
-    {
-        particles.into_iter().for_each(|p| self.add_one(p))
+    pub fn add_one(&mut self, particle: Particle) {
+        self.particle_count += 1;
+        self.add(particle);
+    }
+
+    #[inline]
+    pub fn add_bulk(&mut self, particles: Vec<Particle>) {
+        self.particle_count += particles.len();
+        particles.into_iter().for_each(|p| self.add(p))
     }
 
     pub fn update(&mut self) {
@@ -93,6 +95,10 @@ impl Space {
             .map(move |v| [v.0, v.1, v.2])
             .filter_map(|index| self.table.get(&index))
             .flatten()
+    }
+
+    pub fn count(&self) -> usize {
+        self.particle_count
     }
 }
 

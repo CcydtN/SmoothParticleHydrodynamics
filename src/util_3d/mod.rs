@@ -1,4 +1,4 @@
-mod init_setup;
+pub mod init_setup;
 mod particle;
 mod space;
 mod spatial_hash_grid;
