@@ -81,7 +81,8 @@ mod tests {
         let velocity = vec![vec3(-1., -1., -1.), vec3(0., 0., 0.), vec3(1., 1., 1.)];
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
-        let viscosity = viscoity_model.compute_accelration(&grid, &position, &velocity, &density);
+        let viscosity =
+            viscoity_model.compute_accelration(&grid, &position, &velocity, &density, h);
 
         assert_eq!(viscosity[0], -viscosity[2]);
         assert_eq!(viscosity[1], Vec3::ZERO);

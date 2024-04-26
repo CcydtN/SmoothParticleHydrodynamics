@@ -5,7 +5,7 @@ dev:
 run:
 	cargo run --bin 3d_sim --release
 test:
-	cargo test
+	cargo test --bin 3d_sim
 perf:
 	perf record -g cargo run --bin benchmark --profile analysis
 report:
