@@ -11,6 +11,10 @@ path = "src/2d_sim.rs"
 name = "3d_sim"
 path = "src/3d_sim.rs"
 
+[[bin]]
+name = "zero_gravity"
+path = "src/zero_gravity.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
