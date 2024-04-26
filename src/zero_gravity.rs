@@ -133,16 +133,11 @@ async fn main() {
             *v += a * time_step / 2.;
         });
 
-        #[cfg(feature = "rendering")]
         if next_render.elapsed().as_millis() >= frame_period {
             next_render = rendering(spacing, particle_per_side, t, &position).await;
         }
 
         t += time_step;
-        // for profiling
-        if t >= 2. {
-            break;
-        }
     }
 }
 

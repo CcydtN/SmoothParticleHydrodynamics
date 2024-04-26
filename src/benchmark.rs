@@ -29,8 +29,7 @@ impl Material {
     }
 }
 
-#[macroquad::main("simulation")]
-async fn main() {
+fn main() {
     // Constant for water
     let water = Material {
         density: MassDensity::new::<mass_density::kilogram_per_cubic_meter>(1000.),
@@ -102,7 +101,7 @@ async fn main() {
     let frame_period = ((1. / 30.) * 1000.) as u128;
 
     dbg!(time_step);
-    loop {
+    while t <= 2. {
         dbg!(t);
         grid.update(&position);
         let density = density_model.compute(&grid, &position);
@@ -133,16 +132,7 @@ async fn main() {
             *v += a * time_step / 2.;
         });
 
-        #[cfg(feature = "rendering")]
-        if next_render.elapsed().as_millis() >= frame_period {
-            next_render = rendering(spacing, particle_per_side, t, &position).await;
-        }
-
         t += time_step;
-        // for profiling
-        if t >= 2. {
-            break;
-        }
     }
 }
 
