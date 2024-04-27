@@ -11,7 +11,7 @@ use macroquad::{
     rand::{gen_range, srand},
 };
 
-pub fn diagonal_3_points(mass: f32) -> Vec<Particle> {
+pub fn diagonal_test(mass: f32) -> Vec<Particle> {
     let position = vec![Vec3::NEG_ONE, Vec3::ZERO, Vec3::ONE];
     let velocity = vec![Vec3::ONE, Vec3::ZERO, Vec3::NEG_ONE];
     position

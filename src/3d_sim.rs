@@ -93,7 +93,7 @@ async fn main() {
         pressure_model.update_pressure(&mut space);
 
         let pressure_acc = pressure_model.accelration(&space);
-        let viscosity_acc = viscosity_model.accelration_(&space, kernel_radius);
+        let viscosity_acc = viscosity_model.accelration(&space, kernel_radius);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
         let acceleration = izip!(pressure_acc, viscosity_acc, surface_tension_acc)

@@ -62,7 +62,7 @@ mod tests {
 
         let density_model = Density::new(kernel);
         let pressure_model = Tait::new(kernel, 2., 7, 2. * 9.81);
-        let particle = init_setup::diagonal_3_points(mass);
+        let particle = init_setup::diagonal_test(mass);
         let mut space = Space::new(h, particle);
 
         density_model.update_density(&mut space);
@@ -84,7 +84,7 @@ mod tests {
 
         let density_model = Density::new(kernel);
         let pressure_model = Tait::new(kernel, 0.5, 7, 2. * 9.81);
-        let particle = init_setup::diagonal_3_points(mass);
+        let particle = init_setup::diagonal_test(mass);
         let mut space = Space::new(h, particle);
 
         density_model.update_density(&mut space);
