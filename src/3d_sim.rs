@@ -56,7 +56,7 @@ async fn main() {
     // let particles = init_setup::create_sphere(
     //     mass,
     //     spacing * particle_per_side as f32 / 2.,
-    //     1000,
+    //     particle_count as usize,
     //     Vec3::ZERO,
     // );
 
