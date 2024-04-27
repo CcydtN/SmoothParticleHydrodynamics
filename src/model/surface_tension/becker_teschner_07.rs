@@ -103,8 +103,7 @@ mod tests {
     use self::init_setup::create_sphere;
 
     use super::*;
-    use crate::{model::density::Density, update_density};
-    use std::f32::consts::PI;
+    use crate::model::density::Density;
 
     // surface_tension should all point to the (0.,0.,0.)
     #[test]
@@ -113,47 +112,12 @@ mod tests {
         let kernel = kernel::Poly6::new(h);
         let mass = 1.;
 
-        let density_model = Density::new(kernel, mass);
-        let surface_tension_model = BeakerTeschner07::new(kernel, mass);
-        let mut grid = SpatialHashGrid::new(h);
-
-        let mut position = vec![];
-        let split_count = 20;
-        let spacing_angle = 2. * PI / split_count as f32;
-        for n in 0..split_count / 2 {
-            let angle = spacing_angle * n as f32;
-            for offset in [0., PI] {
-                let i = (angle + offset).sin();
-                let j = (angle + offset).cos();
-                position.push(vec3(i, j, 0.).normalize());
-                position.push(vec3(i, 0., j).normalize());
-            }
-        }
-        grid.update(&position);
-        let density = density_model.compute(&grid, &position);
-        let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
-
-        for (pos, st) in position.iter().zip(surface_tension) {
-            let dot = pos.dot(st);
-            let magnitude = pos.length() * st.length();
-            let diff = (dot + magnitude).abs();
-            dbg!(pos, st, dot, magnitude, diff);
-            assert!(diff <= 1e-3, "Value of diff: {:?}", diff);
-        }
-    }
-
-    #[test]
-    fn direction_check_1() {
-        let h = 5.;
-        let kernel = kernel::Poly6::new(h);
-        let mass = 1.;
-
-        let density_model = Density::new(kernel, mass);
+        let density_model = Density::new(kernel);
         let surface_tension_model = BeakerTeschner07::new(kernel, mass);
         let particle = create_sphere(mass, 1., 50, Vec3::ZERO);
         let mut space = Space::new(h, particle);
 
-        update_density(mass, &mut space, kernel);
+        density_model.update_density(&mut space);
         let surface_tension = surface_tension_model.par_accelration(&space);
 
         for (p, st) in space.particles().zip(surface_tension) {

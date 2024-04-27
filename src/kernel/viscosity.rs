@@ -54,7 +54,7 @@ impl KernelImpl for Viscosity {
             return 0.;
         }
         let value =
-            (1. / (self.h.powi(2) * r.powi(3)) + 2. / self.h.powi(5) - 3. * r / self.h.powi(6));
+            1. / (self.h.powi(2) * r.powi(3)) + 2. / self.h.powi(5) - 3. * r / self.h.powi(6);
         value / self.volume
     }
 }

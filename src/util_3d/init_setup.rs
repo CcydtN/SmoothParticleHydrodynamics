@@ -1,7 +1,6 @@
 use std::{
     f32::consts::PI,
     iter,
-    ops::{Range, RangeInclusive},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -13,7 +12,6 @@ use macroquad::{
 };
 
 pub fn diagonal_3_points(mass: f32) -> Vec<Particle> {
-    let template = Vec3::ONE;
     let position = vec![Vec3::NEG_ONE, Vec3::ZERO, Vec3::ONE];
     let velocity = vec![Vec3::ONE, Vec3::ZERO, Vec3::NEG_ONE];
     position

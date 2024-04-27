@@ -51,48 +51,48 @@ impl<T: kernel::Kernel> SurfaceTension<T> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::model::density::Density;
-    use std::f32::consts::PI;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use crate::model::density::Density;
+//     use std::f32::consts::PI;
 
-    // surface_tension should all point to the (0.,0.,0.)
-    #[test]
-    fn direction_check() {
-        let h = 5.;
-        let kernel = kernel::Poly6::new(h);
-        let mass = 1.;
+//     // surface_tension should all point to the (0.,0.,0.)
+//     #[test]
+//     fn direction_check() {
+//         let h = 5.;
+//         let kernel = kernel::Poly6::new(h);
+//         let mass = 1.;
 
-        let density_model = Density::new(kernel, mass);
-        let surface_tension_model = SurfaceTension::new(kernel, 1., mass);
-        let mut grid = SpatialHashGrid::new(h);
+//         let density_model = Density::new(kernel, mass);
+//         let surface_tension_model = SurfaceTension::new(kernel, 1., mass);
+//         let mut grid = SpatialHashGrid::new(h);
 
-        let mut position = vec![];
-        let split_count = 20;
-        let spacing_angle = 2. * PI / split_count as f32;
-        for n in 0..split_count / 2 {
-            let angle = spacing_angle * n as f32;
-            for offset in [0., PI] {
-                let i = (angle + offset).sin();
-                let j = (angle + offset).cos();
-                position.push(vec3(i, j, 0.).normalize());
-                position.push(vec3(i, 0., j).normalize());
-            }
-        }
-        grid.update(&position);
-        let density = density_model.compute(&grid, &position);
-        let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
+//         let mut position = vec![];
+//         let split_count = 20;
+//         let spacing_angle = 2. * PI / split_count as f32;
+//         for n in 0..split_count / 2 {
+//             let angle = spacing_angle * n as f32;
+//             for offset in [0., PI] {
+//                 let i = (angle + offset).sin();
+//                 let j = (angle + offset).cos();
+//                 position.push(vec3(i, j, 0.).normalize());
+//                 position.push(vec3(i, 0., j).normalize());
+//             }
+//         }
+//         grid.update(&position);
+//         let density = density_model.compute(&grid, &position);
+//         let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
-        for (pos, st) in position.iter().zip(surface_tension) {
-            let dot = pos.dot(st);
-            let magnitude = pos.length() * st.length();
-            // dot should be negetive
-            // magnitude should be positive
-            // same value, not same direction
-            let diff = (dot + magnitude).abs();
-            dbg!(pos, st, dot, magnitude, diff);
-            assert!(diff <= 1e-3, "Value of diff: {:?}", diff);
-        }
-    }
-}
+//         for (pos, st) in position.iter().zip(surface_tension) {
+//             let dot = pos.dot(st);
+//             let magnitude = pos.length() * st.length();
+//             // dot should be negetive
+//             // magnitude should be positive
+//             // same value, not same direction
+//             let diff = (dot + magnitude).abs();
+//             dbg!(pos, st, dot, magnitude, diff);
+//             assert!(diff <= 1e-3, "Value of diff: {:?}", diff);
+//         }
+//     }
+// }

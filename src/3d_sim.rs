@@ -16,7 +16,7 @@ use util_3d::*;
 
 use crate::{
     kernel::Kernel,
-    model::{surface_tension, viscosity},
+    model::{density, surface_tension, viscosity},
 };
 
 struct Material {
@@ -63,7 +63,8 @@ async fn main() {
     let cubic_spline = kernel::CubicSpline::new(kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
-    let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
+    let density_model = density::Density::new(cubic_spline);
+    let pressure_model = pressure::Tait::new(cubic_spline, rest_density, 7, speed_of_sound);
     let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
     let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
@@ -88,10 +89,10 @@ async fn main() {
     loop {
         dbg!(t);
 
-        update_density(mass, &mut space, cubic_spline);
+        density_model.update_density(&mut space);
         pressure_model.update_pressure(&mut space);
 
-        let pressure_acc = pressure_model.accelration_(&space);
+        let pressure_acc = pressure_model.accelration(&space);
         let viscosity_acc = viscosity_model.accelration_(&space, kernel_radius);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
@@ -112,25 +113,6 @@ async fn main() {
         t += time_step;
         space.update();
     }
-}
-
-fn update_density(mass: f32, space: &mut Space, kernel: impl kernel::Kernel) {
-    let density = space
-        .particles_with_neighbour(kernel.support_radius())
-        .map(|(a, others)| {
-            others
-                .map(|b| {
-                    let r = a.position - b.position;
-                    mass * kernel.function(r)
-                })
-                .sum::<f32>()
-        })
-        .collect_vec();
-
-    space
-        .particles_mut()
-        .zip(density)
-        .for_each(|(particle, d)| particle.density = d);
 }
 
 async fn rendering(
