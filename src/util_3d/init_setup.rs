@@ -1,5 +1,6 @@
 use std::{
     f32::consts::PI,
+    iter,
     ops::{Range, RangeInclusive},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -11,18 +12,19 @@ use macroquad::{
     rand::{gen_range, srand},
 };
 
-pub fn diagonal_3_points() -> Vec<Particle> {
+pub fn diagonal_3_points(mass: f32) -> Vec<Particle> {
     let template = Vec3::ONE;
     let position = vec![Vec3::NEG_ONE, Vec3::ZERO, Vec3::ONE];
     let velocity = vec![Vec3::ONE, Vec3::ZERO, Vec3::NEG_ONE];
     position
         .into_iter()
-        .zip(velocity.into_iter())
+        .zip(velocity)
+        .zip(iter::repeat(mass))
         .map(Into::into)
         .collect()
 }
 
-pub fn random_points(count: usize, low: f32, high: f32) -> Vec<Particle> {
+pub fn random_points(count: usize, low: f32, high: f32, mass: f32) -> Vec<Particle> {
     srand(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -33,7 +35,12 @@ pub fn random_points(count: usize, low: f32, high: f32) -> Vec<Particle> {
     let random_value = || gen_range(low, high);
     let random_pos = || vec3(random_value(), random_value(), random_value());
     let mut position = (0..count).map(|_| random_pos()).collect_vec();
-    position.into_iter().map(Into::into).collect()
+    position
+        .into_iter()
+        .zip(iter::repeat(Vec3::ZERO))
+        .zip(iter::repeat(mass))
+        .map(Into::into)
+        .collect()
 }
 
 pub fn create_cube(
@@ -50,6 +57,8 @@ pub fn create_cube(
         0..particle_per_side
     )
     .map(|(i, j, k)| center + vec3(i as f32, j as f32, k as f32) * spacing)
+    .zip(iter::repeat(Vec3::ZERO))
+    .zip(iter::repeat(mass))
     .map(Into::into)
     .collect_vec()
 }
@@ -68,11 +77,9 @@ pub fn create_sphere(mass: f32, radius: f32, count: usize, center_offset: Vec3) 
             let z = phi.sin() * radius_at_y;
             vec3(x, y, z) + center_offset
         })
+        .zip(iter::repeat(Vec3::ZERO))
+        .zip(iter::repeat(mass))
         .map(Into::into)
-        .map(|mut p: Particle| {
-            p.mass = mass;
-            p
-        })
         .collect_vec()
 }
 

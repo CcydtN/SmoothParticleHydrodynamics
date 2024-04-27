@@ -11,6 +11,17 @@ pub struct Particle {
     pub pressure: f32,
 }
 
+impl Particle {
+    pub fn new(position: Vec3, velocity: Vec3, mass: f32) -> Self {
+        Self {
+            position,
+            velocity,
+            mass,
+            ..Default::default()
+        }
+    }
+}
+
 impl From<Vec3> for Particle {
     fn from(value: Vec3) -> Self {
         Self {
@@ -35,6 +46,17 @@ impl From<(Vec3, Vec3, f32)> for Particle {
         Self {
             position: value.0,
             velocity: value.1,
+            mass: value.2,
+            ..Default::default()
+        }
+    }
+}
+impl From<((Vec3, Vec3), f32)> for Particle {
+    fn from(value: ((Vec3, Vec3), f32)) -> Self {
+        Self {
+            position: value.0 .0,
+            velocity: value.0 .1,
+            mass: value.1,
             ..Default::default()
         }
     }

@@ -127,8 +127,9 @@ mod tests {
     fn random_point_cover_test() {
         let grid_size = 1.;
         let search_size = 2. * grid_size;
+        let mass = 1.;
 
-        let particles = init_setup::random_points(1000, -5., 5.);
+        let particles = init_setup::random_points(1000, -5., 5., mass);
         let grid = Space::new(grid_size, particles.clone());
 
         for (a, iter) in grid.particles_with_neighbour(search_size) {
