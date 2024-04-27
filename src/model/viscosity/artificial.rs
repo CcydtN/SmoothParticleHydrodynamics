@@ -76,7 +76,29 @@ impl<T: kernel::Kernel> Artificial<T> {
         let denominator = r.length_squared() + 0.01 * kernel_radius.powi(2);
         let constant =
             (2. * self.alpha * kernel_radius * self.speed_sound) / (a.density + b.density);
-        self.mass * self.kernel.gradient(r) * constant * numerator / denominator
+        self.mass * gradient * constant * numerator / denominator
+    }
+
+    pub fn accelration_(&self, space: &Space, kernel_radius: f32) -> Vec<Vec3> {
+        space
+            .particles_with_neighbour(self.kernel.support_radius())
+            .map(|(a, others)| -> Vec3 {
+                others
+                    .map(|b| {
+                        let r = a.position - b.position;
+                        let v = a.velocity - b.velocity;
+                        if r.dot(v) >= 0. {
+                            return Vec3::ZERO;
+                        }
+                        let numerator = r.dot(v);
+                        let denominator = r.length_squared() + 0.01 * kernel_radius.powi(2);
+                        let constant = (2. * self.alpha * kernel_radius * self.speed_sound)
+                            / (a.density + b.density);
+                        self.mass * self.kernel.gradient(r) * constant * numerator / denominator
+                    })
+                    .fold(Vec3::ZERO, |a, b| a + b)
+            })
+            .collect_vec()
     }
 }
 

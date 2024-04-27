@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use macroquad::prelude::*;
 
 use crate::kernel;
@@ -39,6 +40,25 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
         }
         accelration.iter().for_each(|p| assert!(!p.is_nan()));
         accelration
+    }
+
+    pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
+        space
+            .particles_with_neighbour(self.kernel.support_radius())
+            .map(|(a, others)| -> Vec3 {
+                let mut sum = Vec3::ZERO;
+                let mut color_field_gradient = Vec3::ZERO;
+                let mut color_field_lapacian = Vec3::ZERO;
+                others.for_each(|b| {
+                    let r = a.position - b.position;
+                    sum += self.mass * self.kernel.function(r) * r;
+                    color_field_gradient += self.mass * self.kernel.gradient(r) / b.density;
+                    color_field_lapacian += self.mass * self.kernel.laplacian(r) / b.density;
+                });
+                let kappa = -color_field_lapacian.length_squared() / color_field_gradient.length();
+                kappa / self.mass * sum
+            })
+            .collect_vec()
     }
 }
 

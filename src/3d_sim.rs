@@ -2,9 +2,10 @@ mod kernel;
 mod model;
 mod util_3d;
 
-use itertools::Itertools;
+use itertools::{izip, Itertools};
 use macroquad::{color::Color, prelude::*};
 use model::pressure;
+use rayon::prelude::*;
 use std::f32::consts::PI;
 use uom::si::{
     acceleration,
@@ -13,7 +14,10 @@ use uom::si::{
 };
 use util_3d::*;
 
-use crate::{kernel::Kernel, model::viscosity};
+use crate::{
+    kernel::Kernel,
+    model::{surface_tension, viscosity},
+};
 
 struct Material {
     density: MassDensity,
@@ -55,6 +59,7 @@ async fn main() {
 
     let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
     let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
+    let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
     let mut space = Space::new(kernel_radius, particles);
 
@@ -80,32 +85,12 @@ async fn main() {
         update_density(mass, &mut space, cubic_spline);
         pressure_model.update_pressure(&mut space);
 
-        let acceleration = {
-            let mut tmp: Vec<Vec3> = vec![];
-            tmp.reserve_exact(space.count());
-            for (a, others) in space.particles_with_neighbour(kernel_radius) {
-                let mut acc = Vec3::ZERO;
-                let mut surface_tension_sum = Vec3::ZERO;
-                let mut color_field_gradient = Vec3::ZERO;
-                let mut color_field_lapacian = Vec3::ZERO;
-                for b in others {
-                    let r = a.position - b.position;
-                    let function = cubic_spline.function(r);
-                    let gradient = cubic_spline.gradient(r);
-                    let laplacian = cubic_spline.laplacian(r);
-                    acc += pressure_model.accelration(a, b, gradient);
-                    acc += viscosity_model.accelration(a, b, kernel_radius, gradient);
-                    surface_tension_sum += mass * function * r;
-                    color_field_gradient += mass * gradient / b.density;
-                    color_field_lapacian += mass * laplacian / b.density;
-                }
-                let kappa = -color_field_lapacian.length_squared() / color_field_gradient.length();
-                acc += kappa / mass * surface_tension_sum;
-                // }
-                tmp.push(acc);
-            }
-            tmp
-        };
+        let pressure_acc = pressure_model.accelration_(&space);
+        let viscosity_acc = viscosity_model.accelration_(&space, kernel_radius);
+        let surface_tension_acc = surface_tension_model.accelration(&space);
+
+        let acceleration =
+            izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
 
         space.particles_mut().zip(acceleration).for_each(|(p, a)| {
             p.velocity += a * time_step / 2.;

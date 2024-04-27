@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use macroquad::prelude::*;
 
 use crate::kernel::Kernel;
@@ -63,6 +64,22 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
 
     pub fn accelration(&self, a: &Particle, b: &Particle, gradient: Vec3) -> Vec3 {
         -self.mass * (a.pressure / a.density.powi(2) + b.pressure / b.density.powi(2)) * gradient
+    }
+
+    pub fn accelration_(&self, space: &Space) -> Vec<Vec3> {
+        space
+            .particles_with_neighbour(self.kernel.support_radius())
+            .map(|(a, others)| -> Vec3 {
+                others
+                    .map(|b| {
+                        let r = a.position - b.position;
+                        -self.mass
+                            * (a.pressure / a.density.powi(2) + b.pressure / b.density.powi(2))
+                            * self.kernel.gradient(r)
+                    })
+                    .fold(Vec3::ZERO, |a, b| a + b)
+            })
+            .collect_vec()
     }
 }
 
