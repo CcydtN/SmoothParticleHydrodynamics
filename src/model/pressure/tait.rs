@@ -53,6 +53,17 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
         pressure.iter().for_each(|p| assert!(!p.is_nan()));
         pressure
     }
+
+    pub fn update_pressure(&self, space: &mut Space) {
+        space.particles_mut().for_each(|particle| {
+            particle.pressure = ((particle.density / self.rest_density).powi(self.gamma) - 1.)
+                * self.pressure_constant;
+        })
+    }
+
+    pub fn accelration(&self, a: &Particle, b: &Particle, gradient: Vec3) -> Vec3 {
+        -self.mass * (a.pressure / a.density.powi(2) + b.pressure / b.density.powi(2)) * gradient
+    }
 }
 
 #[cfg(test)]

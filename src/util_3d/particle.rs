@@ -5,6 +5,7 @@ pub struct Particle {
     pub position: Vec3,
     pub velocity: Vec3,
     pub density: f32,
+    pub pressure: f32,
 }
 
 impl From<Vec3> for Particle {

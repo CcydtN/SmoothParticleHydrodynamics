@@ -2,17 +2,18 @@ mod kernel;
 mod model;
 mod util_3d;
 
-use std::f32::consts::PI;
-
-use itertools::{iproduct, izip, Itertools};
+use itertools::Itertools;
 use macroquad::{color::Color, prelude::*};
-use model::{density::Density, pressure, surface_tension, viscosity};
+use model::pressure;
+use std::f32::consts::PI;
 use uom::si::{
     acceleration,
     f32::{Acceleration, MassDensity},
     mass_density,
 };
 use util_3d::*;
+
+use crate::kernel::Kernel;
 
 struct Material {
     density: MassDensity,
@@ -52,6 +53,8 @@ async fn main() {
     let cubic_spline = kernel::CubicSpline::new(kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
+    let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
+
     let mut grid = Space::new(kernel_radius, particles);
 
     // update_density(mass, &mut grid, cubic_spline);
@@ -74,10 +77,22 @@ async fn main() {
         dbg!(t);
 
         update_density(mass, &mut grid, cubic_spline);
-        let acceleration = grid
-            .particles_with_neighbour(kernel_radius)
-            .map(|_| Vec3::ZERO)
-            .collect_vec();
+        pressure_model.update_pressure(&mut grid);
+
+        let acceleration = {
+            let mut tmp: Vec<Vec3> = vec![];
+            tmp.reserve_exact(grid.count());
+            for (a, others) in grid.particles_with_neighbour(cubic_spline.support_radius()) {
+                let mut acc = Vec3::ZERO;
+                for b in others {
+                    let r = a.position - b.position;
+                    let gradient = cubic_spline.gradient(r);
+                    acc += pressure_model.accelration(a, b, gradient);
+                }
+                tmp.push(acc);
+            }
+            tmp
+        };
 
         grid.particles_mut().zip(acceleration).for_each(|(p, a)| {
             p.velocity += a * time_step / 2.;
