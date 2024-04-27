@@ -1,5 +1,4 @@
 use macroquad::math::Vec3;
-use std::fmt::Debug;
 
 pub trait KernelImpl {
     fn support_radius_impl(&self) -> f32;
@@ -15,7 +14,7 @@ pub trait Kernel {
     fn laplacian(&self, r: Vec3) -> Vec3;
 }
 
-impl<T: KernelImpl + Debug> Kernel for T {
+impl<T: KernelImpl> Kernel for T {
     fn support_radius(&self) -> f32 {
         self.support_radius_impl()
     }

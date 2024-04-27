@@ -1,4 +1,5 @@
 use std::{
+    f32::consts::PI,
     ops::{Range, RangeInclusive},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -35,8 +36,13 @@ pub fn random_points(count: usize, low: f32, high: f32) -> Vec<Particle> {
     position.into_iter().map(Into::into).collect()
 }
 
-pub fn create_cube(spacing: f32, particle_per_side: isize, centre_offset: Vec3) -> Vec<Particle> {
-    let center = centre_offset + (spacing * (particle_per_side - 1) as f32) / 2. * Vec3::NEG_ONE;
+pub fn create_cube(
+    spacing: f32,
+    particle_per_side: isize,
+    center_offset: Vec3,
+    mass: f32,
+) -> Vec<Particle> {
+    let center = center_offset + (spacing * (particle_per_side - 1) as f32) / 2. * Vec3::NEG_ONE;
 
     iproduct!(
         0..particle_per_side,
@@ -48,13 +54,35 @@ pub fn create_cube(spacing: f32, particle_per_side: isize, centre_offset: Vec3) 
     .collect_vec()
 }
 
+pub fn create_sphere(mass: f32, radius: f32, count: usize, center_offset: Vec3) -> Vec<Particle> {
+    let golden_ratio = (1.0 + f32::sqrt(5.0)) / 2.0;
+    let angle_increment = PI * (2.0 / golden_ratio);
+
+    (0..count)
+        .map(|i| {
+            let y = (1.0 - (i as f32) / (count as f32) * 2.0) * radius;
+            let radius_at_y = (radius.powi(2) - y.powi(2)).sqrt();
+            let phi = i as f32 * angle_increment;
+
+            let x = phi.cos() * radius_at_y;
+            let z = phi.sin() * radius_at_y;
+            vec3(x, y, z) + center_offset
+        })
+        .map(Into::into)
+        .map(|mut p: Particle| {
+            p.mass = mass;
+            p
+        })
+        .collect_vec()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn even_side_cube() {
-        let particles = create_cube(1., 2, Vec3::ZERO);
+        let particles = create_cube(1., 2, Vec3::ZERO, 1.);
         let expect = vec![
             vec3(-0.5, -0.5, -0.5),
             vec3(-0.5, -0.5, 0.5),
@@ -77,7 +105,7 @@ mod tests {
 
     #[test]
     fn odd_side_cube() {
-        let particles = create_cube(1., 3, Vec3::ZERO);
+        let particles = create_cube(1., 3, Vec3::ZERO, 1.);
         let expect = vec![
             vec3(-1., -1., -1.),
             vec3(-1., -1., 0.),

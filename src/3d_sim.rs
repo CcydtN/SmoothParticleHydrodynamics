@@ -6,7 +6,7 @@ use itertools::{izip, Itertools};
 use macroquad::{color::Color, prelude::*};
 use model::pressure;
 use rayon::prelude::*;
-use std::f32::consts::PI;
+use std::{f32::consts::PI, iter};
 use uom::si::{
     acceleration,
     f32::{Acceleration, MassDensity},
@@ -52,7 +52,13 @@ async fn main() {
     let kernel_radius = 27f32.powf(1. / 3.) * spacing;
 
     dbg!(rest_density, total_mass, spacing, kernel_radius);
-    let particles = init_setup::create_cube(spacing, particle_per_side, Vec3::ZERO);
+    let particles = init_setup::create_cube(spacing, particle_per_side, Vec3::ZERO, mass);
+    // let particles = init_setup::create_sphere(
+    //     mass,
+    //     spacing * particle_per_side as f32 / 2.,
+    //     1000,
+    //     Vec3::ZERO,
+    // );
 
     let cubic_spline = kernel::CubicSpline::new(kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
@@ -89,8 +95,9 @@ async fn main() {
         let viscosity_acc = viscosity_model.accelration_(&space, kernel_radius);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
-        let acceleration =
-            izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
+        let acceleration = izip!(pressure_acc, viscosity_acc, surface_tension_acc)
+            // .par_bridge()
+            .map(|t| t.0 + t.1 + t.2);
 
         space.particles_mut().zip(acceleration).for_each(|(p, a)| {
             p.velocity += a * time_step / 2.;

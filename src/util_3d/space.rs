@@ -1,4 +1,5 @@
 use itertools::{iproduct, Itertools};
+use rayon::prelude::*;
 use std::{collections::HashMap, iter, ops::Deref};
 
 use crate::kernel;
@@ -76,6 +77,12 @@ impl Space {
         self.table.values_mut().flatten()
     }
 
+    pub fn par_particles_mut(&mut self) -> impl ParallelIterator<Item = &mut Particle> {
+        self.table
+            .par_iter_mut()
+            .flat_map(|(_, v)| v.par_iter_mut())
+    }
+
     pub fn particles_with_neighbour(
         &self,
         radius: f32,
@@ -83,6 +90,16 @@ impl Space {
         self.table.iter().flat_map(move |(key, value)| {
             let nei = self.neighbour(key, radius);
             value.iter().map(move |v| (v, nei.clone()))
+        })
+    }
+
+    pub fn par_particles_with_neighbour(
+        &self,
+        radius: f32,
+    ) -> impl ParallelIterator<Item = (&Particle, impl Iterator<Item = &Particle> + Clone)> {
+        self.table.par_iter().flat_map(move |(key, value)| {
+            let nei = self.neighbour(key, radius);
+            value.par_iter().map(move |v| (v, nei.clone()))
         })
     }
 

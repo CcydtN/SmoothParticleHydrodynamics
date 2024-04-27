@@ -1,15 +1,17 @@
 use itertools::Itertools;
 use macroquad::prelude::*;
+use rayon::prelude::*;
 
 use crate::kernel;
+use crate::kernel::Kernel;
 use crate::util_3d::*;
 
-pub struct BeakerTeschner07<T: kernel::Kernel> {
+pub struct BeakerTeschner07<T: kernel::Kernel + Sync + Send> {
     kernel: T,
     mass: f32,
 }
 
-impl<T: kernel::Kernel> BeakerTeschner07<T> {
+impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
     pub fn new(kernel: T, mass: f32) -> Self {
         Self { kernel, mass }
     }
@@ -46,26 +48,62 @@ impl<T: kernel::Kernel> BeakerTeschner07<T> {
         space
             .particles_with_neighbour(self.kernel.support_radius())
             .map(|(a, others)| -> Vec3 {
-                let mut sum = Vec3::ZERO;
-                let mut color_field_gradient = Vec3::ZERO;
-                let mut color_field_lapacian = Vec3::ZERO;
-                others.for_each(|b| {
-                    let r = a.position - b.position;
-                    sum += self.mass * self.kernel.function(r) * r;
-                    color_field_gradient += self.mass * self.kernel.gradient(r) / b.density;
-                    color_field_lapacian += self.mass * self.kernel.laplacian(r) / b.density;
-                });
+                let (sum, color_field_gradient, color_field_lapacian) =
+                    others.fold((Vec3::ZERO, Vec3::ZERO, Vec3::ZERO), |acc, b| {
+                        let r = a.position - b.position;
+                        (
+                            acc.0 + self.mass * self.kernel.function(r) * r,
+                            acc.1 + self.mass * self.kernel.gradient(r) / b.density,
+                            acc.2 + self.mass * self.kernel.laplacian(r) / b.density,
+                        )
+                    });
                 let kappa = -color_field_lapacian.length_squared() / color_field_gradient.length();
                 kappa / self.mass * sum
             })
             .collect_vec()
     }
+
+    pub fn par_accelration(&self, space: &Space) -> Vec<Vec3> {
+        space
+            .particles_with_neighbour(self.kernel.support_radius())
+            // .map(|(a, others)| -> Vec3 {
+            //     let (sum, color_field_gradient, color_field_laplacian) = others
+            //         .map(|b| {
+            //             let r = a.position - b.position;
+            //             (
+            //                 b.mass * self.kernel.function(r) * r,
+            //                 b.mass * self.kernel.gradient(r) / b.density,
+            //                 b.mass * self.kernel.laplacian(r) / b.density,
+            //             )
+            //         })
+            //         .reduce(
+            //             || (Vec3::ZERO, Vec3::ZERO, Vec3::ZERO),
+            //             |a, b| (a.0 + b.0, a.1 + b.1, a.2 + b.2),
+            //         );
+            .map(|(a, others)| -> Vec3 {
+                let (sum, color_field_gradient, color_field_laplacian) =
+                    others.fold((Vec3::ZERO, Vec3::ZERO, Vec3::ZERO), |acc, b| {
+                        let r = a.position - b.position;
+                        (
+                            acc.0 + self.mass * self.kernel.function(r) * r,
+                            acc.1 + self.mass * self.kernel.gradient(r) / b.density,
+                            acc.2 + self.mass * self.kernel.laplacian(r) / b.density,
+                        )
+                    });
+                dbg!(sum, color_field_gradient, color_field_laplacian);
+                let kappa = -color_field_laplacian.length_squared() / color_field_gradient.length();
+                kappa / a.mass * sum
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use self::init_setup::create_sphere;
+
     use super::*;
-    use crate::model::density::Density;
+    use crate::{model::density::Density, update_density};
     use std::f32::consts::PI;
 
     // surface_tension should all point to the (0.,0.,0.)
@@ -96,6 +134,30 @@ mod tests {
         let surface_tension = surface_tension_model.compute_accelration(&grid, &position, &density);
 
         for (pos, st) in position.iter().zip(surface_tension) {
+            let dot = pos.dot(st);
+            let magnitude = pos.length() * st.length();
+            let diff = (dot + magnitude).abs();
+            dbg!(pos, st, dot, magnitude, diff);
+            assert!(diff <= 1e-3, "Value of diff: {:?}", diff);
+        }
+    }
+
+    #[test]
+    fn direction_check_1() {
+        let h = 5.;
+        let kernel = kernel::Poly6::new(h);
+        let mass = 1.;
+
+        let density_model = Density::new(kernel, mass);
+        let surface_tension_model = BeakerTeschner07::new(kernel, mass);
+        let particle = create_sphere(mass, 1., 50, Vec3::ZERO);
+        let mut space = Space::new(h, particle);
+
+        update_density(mass, &mut space, kernel);
+        let surface_tension = surface_tension_model.par_accelration(&space);
+
+        for (p, st) in space.particles().zip(surface_tension) {
+            let pos = p.position;
             let dot = pos.dot(st);
             let magnitude = pos.length() * st.length();
             let diff = (dot + magnitude).abs();
