@@ -56,7 +56,7 @@ async fn main() {
     let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
     let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
 
-    let mut grid = Space::new(kernel_radius, particles);
+    let mut space = Space::new(kernel_radius, particles);
 
     // update_density(mass, &mut grid, cubic_spline);
     // dbg!(grid
@@ -77,13 +77,13 @@ async fn main() {
     loop {
         dbg!(t);
 
-        update_density(mass, &mut grid, cubic_spline);
-        pressure_model.update_pressure(&mut grid);
+        update_density(mass, &mut space, cubic_spline);
+        pressure_model.update_pressure(&mut space);
 
         let acceleration = {
             let mut tmp: Vec<Vec3> = vec![];
-            tmp.reserve_exact(grid.count());
-            for (a, others) in grid.particles_with_neighbour(kernel_radius) {
+            tmp.reserve_exact(space.count());
+            for (a, others) in space.particles_with_neighbour(kernel_radius) {
                 let mut acc = Vec3::ZERO;
                 let mut surface_tension_sum = Vec3::ZERO;
                 let mut color_field_gradient = Vec3::ZERO;
@@ -107,18 +107,18 @@ async fn main() {
             tmp
         };
 
-        grid.particles_mut().zip(acceleration).for_each(|(p, a)| {
+        space.particles_mut().zip(acceleration).for_each(|(p, a)| {
             p.velocity += a * time_step / 2.;
             p.position += p.velocity * time_step;
             p.velocity += a * time_step / 2.;
         });
 
         if next_render.elapsed().as_millis() >= frame_period {
-            next_render = rendering(spacing, particle_per_side, &grid, &mut render_var).await;
+            next_render = rendering(spacing, particle_per_side, &space, &mut render_var).await;
         }
 
         t += time_step;
-        grid.update();
+        space.update();
     }
 }
 

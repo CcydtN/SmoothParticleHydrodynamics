@@ -35,13 +35,17 @@ pub fn random_points(count: usize, low: f32, high: f32) -> Vec<Particle> {
     position.into_iter().map(Into::into).collect()
 }
 
-pub fn create_cube(spacing: f32, count_per_side: isize, centre_offset: Vec3) -> Vec<Particle> {
-    let center = centre_offset + (spacing * (count_per_side - 1) as f32) / 2. * Vec3::NEG_ONE;
+pub fn create_cube(spacing: f32, particle_per_side: isize, centre_offset: Vec3) -> Vec<Particle> {
+    let center = centre_offset + (spacing * (particle_per_side - 1) as f32) / 2. * Vec3::NEG_ONE;
 
-    iproduct!(0..count_per_side, 0..count_per_side, 0..count_per_side)
-        .map(|(i, j, k)| center + vec3(i as f32, j as f32, k as f32) * spacing)
-        .map(Into::into)
-        .collect_vec()
+    iproduct!(
+        0..particle_per_side,
+        0..particle_per_side,
+        0..particle_per_side
+    )
+    .map(|(i, j, k)| center + vec3(i as f32, j as f32, k as f32) * spacing)
+    .map(Into::into)
+    .collect_vec()
 }
 
 #[cfg(test)]
