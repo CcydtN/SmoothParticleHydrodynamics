@@ -13,7 +13,7 @@ use uom::si::{
 };
 use util_3d::*;
 
-use crate::kernel::Kernel;
+use crate::{kernel::Kernel, model::viscosity};
 
 struct Material {
     density: MassDensity,
@@ -54,6 +54,7 @@ async fn main() {
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
     let pressure_model = pressure::Tait::new(cubic_spline, mass, rest_density, 7, speed_of_sound);
+    let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
 
     let mut grid = Space::new(kernel_radius, particles);
 
@@ -88,6 +89,7 @@ async fn main() {
                     let r = a.position - b.position;
                     let gradient = cubic_spline.gradient(r);
                     acc += pressure_model.accelration(a, b, gradient);
+                    acc += viscosity_model.accelration(a, b, kernel_radius, gradient);
                 }
                 tmp.push(acc);
             }
@@ -126,15 +128,6 @@ fn update_density(mass: f32, space: &mut Space, kernel: impl kernel::Kernel) {
         .particles_mut()
         .zip(density)
         .for_each(|(particle, d)| particle.density = d);
-}
-
-fn compute_accelration(mass: f32, space: &mut Space, kernel: impl kernel::Kernel) -> Vec<Vec3> {
-    let mut acceleration = vec![];
-    acceleration.reserve_exact(space.count());
-    for (a, others) in space.particles_with_neighbour(kernel.support_radius()) {
-        for b in others {}
-    }
-    acceleration
 }
 
 async fn rendering(

@@ -59,6 +59,25 @@ impl<T: kernel::Kernel> Artificial<T> {
             .map(viscosity)
             .collect_vec()
     }
+
+    pub fn accelration(
+        &self,
+        a: &Particle,
+        b: &Particle,
+        kernel_radius: f32,
+        gradient: Vec3,
+    ) -> Vec3 {
+        let r = a.position - b.position;
+        let v = a.velocity - b.velocity;
+        if r.dot(v) >= 0. {
+            return Vec3::ZERO;
+        }
+        let numerator = r.dot(v);
+        let denominator = r.length_squared() + 0.01 * kernel_radius.powi(2);
+        let constant =
+            (2. * self.alpha * kernel_radius * self.speed_sound) / (a.density + b.density);
+        self.mass * self.kernel.gradient(r) * constant * numerator / denominator
+    }
 }
 
 #[cfg(test)]
