@@ -38,7 +38,7 @@ async fn main() {
     let gravity = gravity.get::<acceleration::centimeter_per_second_squared>();
 
     let mass = 1.; // gram
-    let particle_per_side = 12isize;
+    let particle_per_side = 13isize;
 
     let particle_count = particle_per_side.pow(3); // total 1000;
     let total_mass = mass * particle_count as f32;
@@ -83,14 +83,25 @@ async fn main() {
         let acceleration = {
             let mut tmp: Vec<Vec3> = vec![];
             tmp.reserve_exact(grid.count());
-            for (a, others) in grid.particles_with_neighbour(cubic_spline.support_radius()) {
+            for (a, others) in grid.particles_with_neighbour(kernel_radius) {
                 let mut acc = Vec3::ZERO;
+                let mut surface_tension_sum = Vec3::ZERO;
+                let mut color_field_gradient = Vec3::ZERO;
+                let mut color_field_lapacian = Vec3::ZERO;
                 for b in others {
                     let r = a.position - b.position;
+                    let function = cubic_spline.function(r);
                     let gradient = cubic_spline.gradient(r);
+                    let laplacian = cubic_spline.laplacian(r);
                     acc += pressure_model.accelration(a, b, gradient);
                     acc += viscosity_model.accelration(a, b, kernel_radius, gradient);
+                    surface_tension_sum += mass * function * r;
+                    color_field_gradient += mass * gradient / b.density;
+                    color_field_lapacian += mass * laplacian / b.density;
                 }
+                let kappa = -color_field_lapacian.length_squared() / color_field_gradient.length();
+                acc += kappa / mass * surface_tension_sum;
+                // }
                 tmp.push(acc);
             }
             tmp
