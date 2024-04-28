@@ -93,15 +93,11 @@ async fn main() {
         let acceleration =
             izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
 
-        space
-            .particles_mut()
-            .zip(acceleration)
-            .par_bridge()
-            .for_each(|(p, a)| {
-                p.velocity += a * time_step / 2.;
-                p.position += p.velocity * time_step;
-                p.velocity += a * time_step / 2.;
-            });
+        space.particles_mut().zip(acceleration).for_each(|(p, a)| {
+            p.velocity += a * time_step / 2.;
+            p.position += p.velocity * time_step;
+            p.velocity += a * time_step / 2.;
+        });
 
         if next_render.elapsed().as_millis() >= frame_period {
             dbg!(t);
