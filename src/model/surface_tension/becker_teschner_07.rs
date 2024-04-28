@@ -15,34 +15,6 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
     pub fn new(kernel: T, mass: f32) -> Self {
         Self { kernel, mass }
     }
-    pub fn compute_accelration(
-        &self,
-        grid: &SpatialHashGrid,
-        position: &Vec<Vec3>,
-        density: &Vec<f32>,
-    ) -> Vec<Vec3> {
-        let mut accelration = vec![];
-        for i in 0..position.len() {
-            let mut color_field_gradient = Vec3::ZERO;
-            let mut color_field_lapacian = Vec3::ZERO;
-            let mut sum = Vec3::ZERO;
-            for &j in grid.lookup(&position[i], self.kernel.support_radius()) {
-                let r = position[i] - position[j];
-                color_field_gradient += self.mass * self.kernel.gradient(r) / density[j];
-                color_field_lapacian += self.mass * self.kernel.laplacian(r) / density[j];
-                sum += self.mass * self.kernel.function(r) * r;
-            }
-            let n = color_field_gradient.length();
-            if n <= f32::EPSILON {
-                accelration.push(Vec3::ZERO);
-                continue;
-            }
-            let kappa = -color_field_lapacian.length_squared() / n;
-            accelration.push(kappa / self.mass * sum);
-        }
-        accelration.iter().for_each(|p| assert!(!p.is_nan()));
-        accelration
-    }
 
     pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
         space
@@ -50,16 +22,23 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
             .map(|a| {
                 let kernel = T::new(a.kernel_radius);
                 let others = space.neighbour(a, kernel.support_radius());
-                let (sum, color_field_gradient, color_field_lapacian) =
-                    others.fold((Vec3::ZERO, Vec3::ZERO, Vec3::ZERO), |acc, b| {
-                        let r = a.position - b.position;
-                        (
-                            acc.0 + self.mass * self.kernel.function(r) * r,
-                            acc.1 + self.mass * self.kernel.gradient(r) / b.density,
-                            acc.2 + self.mass * self.kernel.laplacian(r) / b.density,
-                        )
-                    });
-                let kappa = -color_field_lapacian.length_squared() / color_field_gradient.length();
+
+                let sum = others.clone().fold(Vec3::ZERO, |acc, b| {
+                    let r = a.position - b.position;
+                    acc + b.mass * self.kernel.function(r) * r
+                });
+
+                let color_field_gradient = others.clone().fold(Vec3::ZERO, |acc, b| {
+                    let r = a.position - b.position;
+                    acc + b.mass * self.kernel.gradient(r) / b.density
+                });
+
+                let color_field_laplacian = others.clone().fold(Vec3::ZERO, |acc, b| {
+                    let r = a.position - b.position;
+                    acc + b.mass * self.kernel.gradient(r) / b.density
+                });
+
+                let kappa = -color_field_laplacian.length_squared() / color_field_gradient.length();
                 kappa / self.mass * sum
             })
             .collect_vec()

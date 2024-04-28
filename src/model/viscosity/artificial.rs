@@ -21,7 +21,7 @@ impl<T: kernel::Kernel> Artificial<T> {
         }
     }
 
-    pub fn accelration(&self, space: &Space, kernel_radius: f32) -> Vec<Vec3> {
+    pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
         space
             .particles()
             .map(|a| {
@@ -34,10 +34,11 @@ impl<T: kernel::Kernel> Artificial<T> {
                         if r.dot(v) >= 0. {
                             return Vec3::ZERO;
                         }
+                        let h = (a.kernel_radius + b.kernel_radius) / 2.;
                         let numerator = r.dot(v);
-                        let denominator = r.length_squared() + 0.01 * kernel_radius.powi(2);
-                        let constant = (2. * self.alpha * kernel_radius * self.speed_sound)
-                            / (a.density + b.density);
+                        let denominator = r.length_squared() + 0.01 * h.powi(2);
+                        let constant =
+                            (2. * self.alpha * h * self.speed_sound) / (a.density + b.density);
                         b.mass * self.kernel.gradient(r) * constant * numerator / denominator
                     })
                     .fold(Vec3::ZERO, |a, b| a + b)
@@ -64,9 +65,8 @@ mod tests {
         let particle = init_setup::diagonal_test(mass, h);
         let mut space = Space::new(h, particle);
 
-        dbg!(&space);
         density_model.update_density(&mut space);
-        let viscosity = viscoity_model.accelration(&space, h);
+        let viscosity = viscoity_model.accelration(&space);
 
         dbg!(&viscosity, &space);
         assert!(viscosity[1].length() <= f32::EPSILON);

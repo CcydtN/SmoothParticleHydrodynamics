@@ -42,7 +42,7 @@ async fn main() {
     let gravity = gravity.get::<acceleration::centimeter_per_second_squared>();
 
     let mass = 1.; // gram
-    let particle_per_side = 13isize;
+    let particle_per_side = 10isize;
 
     let particle_count = particle_per_side.pow(3);
     let total_mass = mass * particle_count as f32;
@@ -88,9 +88,12 @@ async fn main() {
     let time_step = 0.4 * default_kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
     let mut t: f32 = 0.;
 
-    let frame_period = ((1. / 30.) * 1000.) as u128;
+    let frame_period = ((1. / 25.) * 1000.) as u128;
     let mut next_render = std::time::Instant::now();
     let mut render_var = 0.;
+
+    density_model.update_density(&mut space);
+    density_model.update_density(&mut space);
 
     dbg!(time_step);
     loop {
@@ -100,7 +103,7 @@ async fn main() {
         pressure_model.update_pressure(&mut space);
 
         let pressure_acc = pressure_model.accelration(&space);
-        let viscosity_acc = viscosity_model.accelration(&space, default_kernel_radius);
+        let viscosity_acc = viscosity_model.accelration(&space);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
         let acceleration = izip!(pressure_acc, viscosity_acc, surface_tension_acc)
