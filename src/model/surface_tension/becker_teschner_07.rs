@@ -68,7 +68,7 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
 
 #[cfg(test)]
 mod tests {
-    use self::init_setup::create_sphere;
+    use self::{init_setup::create_sphere, kernel::CubicSpline};
 
     use super::*;
     use crate::model::density::Density;
@@ -77,16 +77,16 @@ mod tests {
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = kernel::Poly6::new(h);
+        let kernel = kernel::CubicSpline::new(h);
         let mass = 1.;
 
-        let density_model = Density::new(kernel);
+        let density_model = Density::<CubicSpline>::new();
         let surface_tension_model = BeakerTeschner07::new(kernel, mass);
-        let particle = create_sphere(mass, 1., 50, Vec3::ZERO);
+        let particle = create_sphere(mass, 1., 50, Vec3::ZERO, h);
         let mut space = Space::new(h, particle);
 
         density_model.update_density(&mut space);
-        let surface_tension = surface_tension_model.par_accelration(&space);
+        let surface_tension = surface_tension_model.accelration(&space);
 
         for (p, st) in space.particles().zip(surface_tension) {
             let pos = p.position;

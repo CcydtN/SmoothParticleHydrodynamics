@@ -49,21 +49,22 @@ impl<T: kernel::Kernel> Artificial<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::density::Density;
+    use crate::{kernel::*, model::density::Density};
 
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = kernel::CubicSpline::new(h);
+        let kernel = CubicSpline::new(h);
         let mass = 1.;
         let speed_sound = 10. * ((2. * 9.81 * 0.5) as f32).sqrt();
 
-        let density_model = Density::new(kernel);
+        let density_model = Density::<CubicSpline>::new();
         let viscoity_model = Artificial::new(kernel, 1., speed_sound);
 
-        let particle = init_setup::diagonal_test(mass);
+        let particle = init_setup::diagonal_test(mass, h);
         let mut space = Space::new(h, particle);
 
+        dbg!(&space);
         density_model.update_density(&mut space);
         let viscosity = viscoity_model.accelration(&space, h);
 

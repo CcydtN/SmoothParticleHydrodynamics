@@ -120,7 +120,7 @@ mod tests {
         let search_size = 2. * grid_size;
         let mass = 1.;
 
-        let particles = init_setup::random_points(1000, -5., 5., mass);
+        let particles = init_setup::random_points(1000, -5., 5., mass, grid_size);
         let grid = Space::new(grid_size, particles.clone());
 
         for a in grid.particles() {

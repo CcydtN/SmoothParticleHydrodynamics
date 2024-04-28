@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use itertools::Itertools;
 use macroquad::prelude::*;
 
@@ -6,20 +8,20 @@ use crate::util_3d::*;
 
 #[derive(Debug)]
 pub struct Tait<T: Kernel> {
-    kernel: T,
+    kernel: PhantomData<T>,
     rest_density: f32,
     gamma: i32,
     pressure_constant: f32,
 }
 
 impl<T: Kernel + std::fmt::Debug> Tait<T> {
-    pub fn new(kernel: T, rest_density: f32, gamma: i32, speed_of_sound: f32) -> Self {
+    pub fn new(rest_density: f32, gamma: i32, speed_of_sound: f32) -> Self {
         let pressure_constant = rest_density * (10. * speed_of_sound) / (gamma as f32);
         Self {
-            kernel,
             rest_density,
             gamma,
             pressure_constant,
+            kernel: PhantomData::default(),
         }
     }
 
@@ -41,7 +43,7 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
                         let r = a.position - b.position;
                         -b.mass
                             * (a.pressure / a.density.powi(2) + b.pressure / b.density.powi(2))
-                            * self.kernel.gradient(r)
+                            * kernel.gradient(r)
                     })
                     .fold(Vec3::ZERO, |a, b| a + b)
             })
@@ -52,21 +54,21 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kernel;
+    use crate::kernel::{self, CubicSpline};
     use crate::model::density::Density;
 
     // density > rest_density
     #[test]
     fn repulsion() {
         let h = 5.;
-        let kernel = kernel::CubicSpline::new(h);
         let mass = 1.;
 
-        let density_model = Density::new(kernel);
-        let pressure_model = Tait::new(kernel, 2., 7, 2. * 9.81);
-        let particle = init_setup::diagonal_test(mass);
+        let density_model = Density::<CubicSpline>::new();
+        let pressure_model = Tait::<CubicSpline>::new(2., 7, 2. * 9.81);
+        let particle = init_setup::diagonal_test(mass, h);
         let mut space = Space::new(h, particle);
 
+        dbg!(&space);
         density_model.update_density(&mut space);
         pressure_model.update_pressure(&mut space);
         let pressure = pressure_model.accelration(&space);
@@ -81,12 +83,11 @@ mod tests {
     #[test]
     fn attraction() {
         let h = 5.;
-        let kernel = kernel::Spiky::new(h);
         let mass = 1.;
 
-        let density_model = Density::new(kernel);
-        let pressure_model = Tait::new(kernel, 0.5, 7, 2. * 9.81);
-        let particle = init_setup::diagonal_test(mass);
+        let density_model = Density::<CubicSpline>::new();
+        let pressure_model = Tait::<CubicSpline>::new(0.5, 7, 2. * 9.81);
+        let particle = init_setup::diagonal_test(mass, h);
         let mut space = Space::new(h, particle);
 
         density_model.update_density(&mut space);

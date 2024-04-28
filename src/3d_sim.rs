@@ -49,10 +49,16 @@ async fn main() {
     let spacing = (total_mass / rest_density).powf(1. / 3.) / particle_per_side as f32;
 
     // nice to have around 25-80 particle in the radius, which is between [3,4) (27 - 64 in count)
-    let kernel_radius = 27f32.powf(1. / 3.) * spacing;
+    let default_kernel_radius = 1.3 * (mass / rest_density).powf(1. / 3.);
 
-    dbg!(rest_density, total_mass, spacing, kernel_radius);
-    let particles = init_setup::create_cube(spacing, particle_per_side, Vec3::ZERO, mass);
+    dbg!(rest_density, total_mass, spacing, default_kernel_radius);
+    let particles = init_setup::create_cube(
+        spacing,
+        particle_per_side,
+        Vec3::ZERO,
+        mass,
+        default_kernel_radius,
+    );
     // let particles = init_setup::create_sphere(
     //     mass,
     //     spacing * particle_per_side as f32 / 2.,
@@ -60,20 +66,16 @@ async fn main() {
     //     Vec3::ZERO,
     // );
 
-    let cubic_spline = kernel::CubicSpline::new(kernel_radius);
+    let cubic_spline = kernel::CubicSpline::new(default_kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
     let density_model = density::Density::<kernel::CubicSpline>::new();
-    let pressure_model = pressure::Tait::new(cubic_spline, rest_density, 7, speed_of_sound);
+    let pressure_model =
+        pressure::Tait::<kernel::CubicSpline>::new(rest_density, 7, speed_of_sound);
     let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
     let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
-    let mut space = Space::new(kernel_radius, particles);
-    {
-        space
-            .particles_mut()
-            .for_each(|p| p.kernel_radius = kernel_radius);
-    }
+    let mut space = Space::new(default_kernel_radius, particles);
 
     // update_density(mass, &mut grid, cubic_spline);
     // dbg!(grid
@@ -83,7 +85,7 @@ async fn main() {
     //     .collect_vec());
     // return;
 
-    let time_step = 0.4 * kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
+    let time_step = 0.4 * default_kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
     let mut t: f32 = 0.;
 
     let frame_period = ((1. / 30.) * 1000.) as u128;
@@ -98,7 +100,7 @@ async fn main() {
         pressure_model.update_pressure(&mut space);
 
         let pressure_acc = pressure_model.accelration(&space);
-        let viscosity_acc = viscosity_model.accelration(&space, kernel_radius);
+        let viscosity_acc = viscosity_model.accelration(&space, default_kernel_radius);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
         let acceleration = izip!(pressure_acc, viscosity_acc, surface_tension_acc)

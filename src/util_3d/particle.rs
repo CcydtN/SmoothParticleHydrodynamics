@@ -7,17 +7,18 @@ pub struct Particle {
     pub position: Vec3,
     pub velocity: Vec3,
     pub mass: f32,
-    pub density: f32,
     pub kernel_radius: f32,
+    pub density: f32,
     pub pressure: f32,
 }
 
 impl Particle {
-    pub fn new(position: Vec3, velocity: Vec3, mass: f32) -> Self {
+    pub fn new(position: Vec3, velocity: Vec3, mass: f32, kernel_radius: f32) -> Self {
         Self {
             position,
             velocity,
             mass,
+            kernel_radius,
             ..Default::default()
         }
     }
@@ -41,7 +42,6 @@ impl From<(Vec3, Vec3)> for Particle {
         }
     }
 }
-
 impl From<(Vec3, Vec3, f32)> for Particle {
     fn from(value: (Vec3, Vec3, f32)) -> Self {
         Self {
@@ -52,12 +52,14 @@ impl From<(Vec3, Vec3, f32)> for Particle {
         }
     }
 }
-impl From<((Vec3, Vec3), f32)> for Particle {
-    fn from(value: ((Vec3, Vec3), f32)) -> Self {
+
+impl From<(Vec3, Vec3, f32, f32)> for Particle {
+    fn from(value: (Vec3, Vec3, f32, f32)) -> Self {
         Self {
-            position: value.0 .0,
-            velocity: value.0 .1,
-            mass: value.1,
+            position: value.0,
+            velocity: value.1,
+            mass: value.2,
+            kernel_radius: value.3,
             ..Default::default()
         }
     }
