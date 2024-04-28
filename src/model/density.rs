@@ -1,26 +1,32 @@
+use std::marker::PhantomData;
+
 use crate::kernel;
 use crate::util_3d::*;
 use itertools::Itertools;
 use macroquad::prelude::*;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct Density<T: kernel::Kernel> {
-    kernel: T,
+    _phantom: PhantomData<T>,
 }
 
 impl<T: kernel::Kernel> Density<T> {
-    pub fn new(kernel: T) -> Self {
-        Self { kernel }
+    pub fn new() -> Self {
+        Self {
+            _phantom: PhantomData::default(),
+        }
     }
 
     pub fn update_density(&self, space: &mut Space) {
         let density = space
-            .particles_with_neighbour(self.kernel.support_radius())
-            .map(|(a, others)| {
+            .particles()
+            .map(|a| {
+                let kernel = T::new(a.kernel_radius);
+                let others = space.neighbour(a, kernel.support_radius());
                 others
                     .map(|b| {
                         let r = a.position - b.position;
-                        b.mass * self.kernel.function(r)
+                        b.mass * kernel.function(r)
                     })
                     .sum::<f32>()
             })

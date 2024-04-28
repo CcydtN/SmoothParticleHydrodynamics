@@ -63,12 +63,17 @@ async fn main() {
     let cubic_spline = kernel::CubicSpline::new(kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
-    let density_model = density::Density::new(cubic_spline);
+    let density_model = density::Density::<kernel::CubicSpline>::new();
     let pressure_model = pressure::Tait::new(cubic_spline, rest_density, 7, speed_of_sound);
     let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
     let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
     let mut space = Space::new(kernel_radius, particles);
+    {
+        space
+            .particles_mut()
+            .for_each(|p| p.kernel_radius = kernel_radius);
+    }
 
     // update_density(mass, &mut grid, cubic_spline);
     // dbg!(grid

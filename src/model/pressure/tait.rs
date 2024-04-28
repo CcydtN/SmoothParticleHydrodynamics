@@ -32,8 +32,10 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
 
     pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
         space
-            .particles_with_neighbour(self.kernel.support_radius())
-            .map(|(a, others)| -> Vec3 {
+            .particles()
+            .map(|a| {
+                let kernel = T::new(a.kernel_radius);
+                let others = space.neighbour(a, kernel.support_radius());
                 others
                     .map(|b| {
                         let r = a.position - b.position;

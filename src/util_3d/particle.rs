@@ -8,6 +8,7 @@ pub struct Particle {
     pub velocity: Vec3,
     pub mass: f32,
     pub density: f32,
+    pub kernel_radius: f32,
     pub pressure: f32,
 }
 

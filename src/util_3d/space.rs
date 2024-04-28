@@ -60,6 +60,8 @@ impl Space {
             *val = stay;
             dropped.append(&mut drop);
         });
+
+        self.particle_count -= dropped.len();
         self.add_bulk(dropped);
 
         self.update_count += 1;
@@ -83,27 +85,16 @@ impl Space {
             .flat_map(|(_, v)| v.par_iter_mut())
     }
 
-    pub fn particles_with_neighbour(
+    pub fn neighbour(
         &self,
+        particle: &Particle,
         radius: f32,
-    ) -> impl Iterator<Item = (&Particle, impl Iterator<Item = &Particle>)> {
-        self.table.iter().flat_map(move |(key, value)| {
-            let nei = self.neighbour(key, radius);
-            value.iter().map(move |v| (v, nei.clone()))
-        })
+    ) -> impl Iterator<Item = &Particle> + Clone {
+        let key = hash(self.grid_size, particle);
+        self.neighbour_by_key(&key, radius)
     }
 
-    pub fn par_particles_with_neighbour(
-        &self,
-        radius: f32,
-    ) -> impl ParallelIterator<Item = (&Particle, impl Iterator<Item = &Particle> + Clone)> {
-        self.table.par_iter().flat_map(move |(key, value)| {
-            let nei = self.neighbour(key, radius);
-            value.par_iter().map(move |v| (v, nei.clone()))
-        })
-    }
-
-    fn neighbour(&self, key: &Key, radius: f32) -> impl Iterator<Item = &Particle> + Clone {
+    fn neighbour_by_key(&self, key: &Key, radius: f32) -> impl Iterator<Item = &Particle> + Clone {
         let r: i32 = (radius / self.grid_size).ceil() as i32;
         let x = key[0] - r..=key[0] + r;
         let y = key[1] - r..=key[1] + r;
@@ -132,13 +123,13 @@ mod tests {
         let particles = init_setup::random_points(1000, -5., 5., mass);
         let grid = Space::new(grid_size, particles.clone());
 
-        for (a, iter) in grid.particles_with_neighbour(search_size) {
+        for a in grid.particles() {
             let expect = particles
                 .iter()
                 .filter(|b| a.position.distance(b.position) <= search_size)
                 .collect_vec();
 
-            let ret = iter.collect_vec();
+            let ret = grid.neighbour(a, search_size).collect_vec();
             assert!(ret.len() >= expect.len());
             assert_eq!(
                 ret.into_iter().filter(|x| expect.contains(&x)).count(),

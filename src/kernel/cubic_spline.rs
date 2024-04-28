@@ -7,17 +7,15 @@ pub struct CubicSpline {
     constant: f32,
 }
 
-impl CubicSpline {
-    pub fn new(h: f32) -> Self {
+impl KernelImpl for CubicSpline {
+    fn new(h: f32) -> Self {
         let volume = 4. * h.powi(3) * PI;
         Self {
             h,
             constant: 1. / volume,
         }
     }
-}
 
-impl KernelImpl for CubicSpline {
     fn support_radius_impl(&self) -> f32 {
         2. * self.h
     }

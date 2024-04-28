@@ -46,8 +46,10 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
 
     pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
         space
-            .particles_with_neighbour(self.kernel.support_radius())
-            .map(|(a, others)| -> Vec3 {
+            .particles()
+            .map(|a| {
+                let kernel = T::new(a.kernel_radius);
+                let others = space.neighbour(a, kernel.support_radius());
                 let (sum, color_field_gradient, color_field_lapacian) =
                     others.fold((Vec3::ZERO, Vec3::ZERO, Vec3::ZERO), |acc, b| {
                         let r = a.position - b.position;
@@ -61,40 +63,6 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
                 kappa / self.mass * sum
             })
             .collect_vec()
-    }
-
-    pub fn par_accelration(&self, space: &Space) -> Vec<Vec3> {
-        space
-            .particles_with_neighbour(self.kernel.support_radius())
-            // .map(|(a, others)| -> Vec3 {
-            //     let (sum, color_field_gradient, color_field_laplacian) = others
-            //         .map(|b| {
-            //             let r = a.position - b.position;
-            //             (
-            //                 b.mass * self.kernel.function(r) * r,
-            //                 b.mass * self.kernel.gradient(r) / b.density,
-            //                 b.mass * self.kernel.laplacian(r) / b.density,
-            //             )
-            //         })
-            //         .reduce(
-            //             || (Vec3::ZERO, Vec3::ZERO, Vec3::ZERO),
-            //             |a, b| (a.0 + b.0, a.1 + b.1, a.2 + b.2),
-            //         );
-            .map(|(a, others)| -> Vec3 {
-                let (sum, color_field_gradient, color_field_laplacian) =
-                    others.fold((Vec3::ZERO, Vec3::ZERO, Vec3::ZERO), |acc, b| {
-                        let r = a.position - b.position;
-                        (
-                            acc.0 + self.mass * self.kernel.function(r) * r,
-                            acc.1 + self.mass * self.kernel.gradient(r) / b.density,
-                            acc.2 + self.mass * self.kernel.laplacian(r) / b.density,
-                        )
-                    });
-                dbg!(sum, color_field_gradient, color_field_laplacian);
-                let kappa = -color_field_laplacian.length_squared() / color_field_gradient.length();
-                kappa / a.mass * sum
-            })
-            .collect()
     }
 }
 
