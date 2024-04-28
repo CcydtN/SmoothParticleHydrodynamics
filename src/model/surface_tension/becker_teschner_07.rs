@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use itertools::Itertools;
 use macroquad::prelude::*;
 use rayon::prelude::*;
@@ -7,13 +9,14 @@ use crate::kernel::Kernel;
 use crate::util_3d::*;
 
 pub struct BeakerTeschner07<T: kernel::Kernel + Sync + Send> {
-    kernel: T,
-    mass: f32,
+    _kernel: PhantomData<T>,
 }
 
 impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
-    pub fn new(kernel: T, mass: f32) -> Self {
-        Self { kernel, mass }
+    pub fn new() -> Self {
+        Self {
+            _kernel: PhantomData::default(),
+        }
     }
 
     pub fn accelration(&self, space: &Space) -> Vec<Vec3> {
@@ -25,21 +28,21 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
 
                 let sum = others.clone().fold(Vec3::ZERO, |acc, b| {
                     let r = a.position - b.position;
-                    acc + b.mass * self.kernel.function(r) * r
+                    acc + b.mass * kernel.function(r) * r
                 });
 
                 let color_field_gradient = others.clone().fold(Vec3::ZERO, |acc, b| {
                     let r = a.position - b.position;
-                    acc + b.mass * self.kernel.gradient(r) / b.density
+                    acc + b.mass * kernel.gradient(r) / b.density
                 });
 
                 let color_field_laplacian = others.clone().fold(Vec3::ZERO, |acc, b| {
                     let r = a.position - b.position;
-                    acc + b.mass * self.kernel.gradient(r) / b.density
+                    acc + b.mass * kernel.gradient(r) / b.density
                 });
 
                 let kappa = -color_field_laplacian.length_squared() / color_field_gradient.length();
-                kappa / self.mass * sum
+                kappa / a.mass * sum
             })
             .collect_vec()
     }
@@ -56,11 +59,10 @@ mod tests {
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = kernel::CubicSpline::new(h);
         let mass = 1.;
 
         let density_model = Density::<CubicSpline>::new();
-        let surface_tension_model = BeakerTeschner07::new(kernel, mass);
+        let surface_tension_model = BeakerTeschner07::<CubicSpline>::new();
         let particle = create_sphere(mass, 1., 50, Vec3::ZERO, h);
         let mut space = Space::new(h, particle);
 

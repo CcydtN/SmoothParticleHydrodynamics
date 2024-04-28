@@ -48,7 +48,6 @@ async fn main() {
     let total_mass = mass * particle_count as f32;
     let spacing = (total_mass / rest_density).powf(1. / 3.) / particle_per_side as f32;
 
-    // nice to have around 25-80 particle in the radius, which is between [3,4) (27 - 64 in count)
     let default_kernel_radius = 1.3 * (mass / rest_density).powf(1. / 3.);
 
     dbg!(rest_density, total_mass, spacing, default_kernel_radius);
@@ -60,39 +59,30 @@ async fn main() {
         default_kernel_radius,
     );
 
-    let cubic_spline = kernel::CubicSpline::new(default_kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
 
     let density_model = density::Density::<kernel::CubicSpline>::new();
     let pressure_model =
         pressure::Tait::<kernel::CubicSpline>::new(rest_density, 7, speed_of_sound);
-    let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, 0.08, speed_of_sound);
-    let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
+    let viscosity_model = viscosity::Artificial::<kernel::CubicSpline>::new(0.08, speed_of_sound);
+    let surface_tension_model = surface_tension::BeakerTeschner07::<kernel::CubicSpline>::new();
 
     let mut space = Space::new(default_kernel_radius, particles);
-
-    // update_density(mass, &mut grid, cubic_spline);
-    // dbg!(grid
-    //     .particles()
-    //     .take((particle_count / 10).try_into().unwrap())
-    //     .map(|p| p.density)
-    //     .collect_vec());
-    // return;
 
     let time_step = 0.4 * default_kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
     let mut t: f32 = 0.;
 
-    let frame_period = ((1. / 25.) * 1000.) as u128;
+    let frame_period = ((1. / 2.) * 1000.) as u128;
     let mut next_render = std::time::Instant::now();
     let mut render_var = 0.;
 
     density_model.update_density(&mut space);
     density_model.update_density(&mut space);
+    // dbg!(space);
+    // return;
 
     dbg!(time_step);
     loop {
-        dbg!(t);
-
         density_model.update_density(&mut space);
         pressure_model.update_pressure(&mut space);
 
@@ -100,9 +90,8 @@ async fn main() {
         let viscosity_acc = viscosity_model.accelration(&space);
         let surface_tension_acc = surface_tension_model.accelration(&space);
 
-        let acceleration = izip!(pressure_acc, viscosity_acc, surface_tension_acc)
-            // .par_bridge()
-            .map(|t| t.0 + t.1 + t.2);
+        let acceleration =
+            izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
 
         space.particles_mut().zip(acceleration).for_each(|(p, a)| {
             p.velocity += a * time_step / 2.;
@@ -111,6 +100,7 @@ async fn main() {
         });
 
         if next_render.elapsed().as_millis() >= frame_period {
+            dbg!(t);
             next_render = rendering(spacing, particle_per_side, &space, &mut render_var).await;
         }
 

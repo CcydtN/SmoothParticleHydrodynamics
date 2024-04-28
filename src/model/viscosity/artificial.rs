@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use itertools::Itertools;
 use macroquad::prelude::*;
 
@@ -5,19 +7,19 @@ use crate::kernel;
 use crate::util_3d::*;
 
 pub struct Artificial<T: kernel::Kernel> {
-    kernel: T,
     alpha: f32,
     speed_sound: f32,
+    _kernel: PhantomData<T>,
 }
 
 impl<T: kernel::Kernel> Artificial<T> {
-    pub fn new(kernel: T, mass: f32, alpha: f32, speed_sound: f32) -> Self {
+    pub fn new(alpha: f32, speed_sound: f32) -> Self {
         assert!(speed_sound > 0.0);
         // alpha between 0.08 and 0.5
         Self {
-            kernel,
             alpha,
             speed_sound,
+            _kernel: PhantomData::default(),
         }
     }
 
@@ -39,7 +41,7 @@ impl<T: kernel::Kernel> Artificial<T> {
                         let denominator = r.length_squared() + 0.01 * h.powi(2);
                         let constant =
                             (2. * self.alpha * h * self.speed_sound) / (a.density + b.density);
-                        b.mass * self.kernel.gradient(r) * constant * numerator / denominator
+                        b.mass * kernel.gradient(r) * constant * numerator / denominator
                     })
                     .fold(Vec3::ZERO, |a, b| a + b)
             })
@@ -60,7 +62,7 @@ mod tests {
         let speed_sound = 10. * ((2. * 9.81 * 0.5) as f32).sqrt();
 
         let density_model = Density::<CubicSpline>::new();
-        let viscoity_model = Artificial::new(kernel, 1., 0.08, speed_sound);
+        let viscoity_model = Artificial::<CubicSpline>::new(0.08, speed_sound);
 
         let particle = init_setup::diagonal_test(mass, h);
         let mut space = Space::new(h, particle);

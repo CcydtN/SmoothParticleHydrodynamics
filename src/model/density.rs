@@ -37,7 +37,8 @@ impl<T: kernel::Kernel> Density<T> {
             .zip(density)
             .for_each(|(particle, d)| {
                 particle.density = d;
-                particle.kernel_radius = 1.3 * (particle.mass / particle.density).powf(1. / 3.);
+                particle.kernel_radius =
+                    1.3 * (particle.mass / (0.1 + particle.density)).powf(1. / 3.);
             });
     }
 }
