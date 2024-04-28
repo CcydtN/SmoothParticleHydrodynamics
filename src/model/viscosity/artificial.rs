@@ -7,6 +7,7 @@ use rayon::prelude::*;
 use crate::kernel;
 use crate::util_3d::*;
 
+#[derive(Debug)]
 pub struct Artificial<T: kernel::Kernel> {
     alpha: f32,
     speed_sound: f32,

@@ -8,6 +8,7 @@ use crate::kernel;
 use crate::kernel::Kernel;
 use crate::util_3d::*;
 
+#[derive(Debug)]
 pub struct BeakerTeschner07<T: kernel::Kernel + Sync + Send> {
     _kernel: PhantomData<T>,
 }
