@@ -44,7 +44,7 @@ async fn main() {
     let mass = 1.; // gram
     let particle_per_side = 13isize;
 
-    let particle_count = particle_per_side.pow(3); // total 1000;
+    let particle_count = particle_per_side.pow(3);
     let total_mass = mass * particle_count as f32;
     let spacing = (total_mass / rest_density).powf(1. / 3.) / particle_per_side as f32;
 
