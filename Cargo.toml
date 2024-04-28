@@ -15,9 +15,9 @@ path = "src/3d_sim.rs"
 # name = "zero_gravity"
 # path = "src/zero_gravity.rs"
 
-# [[bin]]
-# name = "benchmark"
-# path = "src/benchmark.rs"
+[[bin]]
+name = "benchmark"
+path = "src/benchmark.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

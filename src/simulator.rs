@@ -1,7 +1,6 @@
 use crate::kernel::*;
 use crate::model::*;
 use crate::util_3d::*;
-use crate::Space;
 use itertools::{izip, Itertools};
 use macroquad::prelude::*;
 use rayon::prelude::*;
@@ -64,9 +63,10 @@ impl Simulator {
         );
 
         let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
+        let alpha = 0.08;
 
         let space = Space::new(default_kernel_radius, particles);
-        let time_step = 0.4 * default_kernel_radius / (speed_of_sound * (1. + 0.6 * 0.1));
+        let time_step = 0.4 * default_kernel_radius / (speed_of_sound * (1. + 0.6 * alpha));
 
         let mut obj = Self {
             t: 0.,
@@ -74,7 +74,7 @@ impl Simulator {
             space,
             density_model: density::Density::new(),
             pressure_model: pressure::Tait::new(rest_density, 7, speed_of_sound),
-            viscosity_model: viscosity::Artificial::new(0.08, speed_of_sound),
+            viscosity_model: viscosity::Artificial::new(alpha, speed_of_sound),
             surface_tension_model: surface_tension::BeakerTeschner07::new(),
             display_distance: particle_per_side as f32 * spacing,
         };
