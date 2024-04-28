@@ -59,12 +59,6 @@ async fn main() {
         mass,
         default_kernel_radius,
     );
-    // let particles = init_setup::create_sphere(
-    //     mass,
-    //     spacing * particle_per_side as f32 / 2.,
-    //     particle_count as usize,
-    //     Vec3::ZERO,
-    // );
 
     let cubic_spline = kernel::CubicSpline::new(default_kernel_radius);
     let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
@@ -72,7 +66,7 @@ async fn main() {
     let density_model = density::Density::<kernel::CubicSpline>::new();
     let pressure_model =
         pressure::Tait::<kernel::CubicSpline>::new(rest_density, 7, speed_of_sound);
-    let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, speed_of_sound);
+    let viscosity_model = viscosity::Artificial::new(cubic_spline, mass, 0.08, speed_of_sound);
     let surface_tension_model = surface_tension::BeakerTeschner07::new(cubic_spline, mass);
 
     let mut space = Space::new(default_kernel_radius, particles);
