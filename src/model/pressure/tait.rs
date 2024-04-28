@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use itertools::Itertools;
 use macroquad::prelude::*;
+use rayon::prelude::*;
 
 use crate::kernel::Kernel;
 use crate::util_3d::*;
@@ -14,7 +15,7 @@ pub struct Tait<T: Kernel> {
     pressure_constant: f32,
 }
 
-impl<T: Kernel + std::fmt::Debug> Tait<T> {
+impl<T: Kernel + std::fmt::Debug + Sync + Send> Tait<T> {
     pub fn new(rest_density: f32, gamma: i32, speed_of_sound: f32) -> Self {
         let pressure_constant = rest_density * (10. * speed_of_sound) / (gamma as f32);
         Self {
@@ -47,7 +48,7 @@ impl<T: Kernel + std::fmt::Debug> Tait<T> {
                     })
                     .fold(Vec3::ZERO, |a, b| a + b)
             })
-            .collect_vec()
+            .collect::<Vec<_>>()
     }
 }
 

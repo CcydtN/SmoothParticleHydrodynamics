@@ -42,7 +42,7 @@ async fn main() {
     let gravity = gravity.get::<acceleration::centimeter_per_second_squared>();
 
     let mass = 1.; // gram
-    let particle_per_side = 10isize;
+    let particle_per_side = 15isize;
 
     let particle_count = particle_per_side.pow(3);
     let total_mass = mass * particle_count as f32;
@@ -93,11 +93,15 @@ async fn main() {
         let acceleration =
             izip!(pressure_acc, viscosity_acc, surface_tension_acc).map(|t| t.0 + t.1 + t.2);
 
-        space.particles_mut().zip(acceleration).for_each(|(p, a)| {
-            p.velocity += a * time_step / 2.;
-            p.position += p.velocity * time_step;
-            p.velocity += a * time_step / 2.;
-        });
+        space
+            .particles_mut()
+            .zip(acceleration)
+            .par_bridge()
+            .for_each(|(p, a)| {
+                p.velocity += a * time_step / 2.;
+                p.position += p.velocity * time_step;
+                p.velocity += a * time_step / 2.;
+            });
 
         if next_render.elapsed().as_millis() >= frame_period {
             dbg!(t);
@@ -140,12 +144,12 @@ async fn rendering(
     draw_line_3d(Vec3::ZERO, Vec3::X, RED);
     draw_line_3d(Vec3::ZERO, Vec3::Y, GREEN);
     draw_line_3d(Vec3::ZERO, Vec3::Z, BLUE);
-    for particle in space.particles() {
+    space.particles().for_each(|particle| {
         let t = (particle.position.length() / base_dist).clamp(0., 1.);
         let color = lerp(LIME, YELLOW, ORANGE, t);
         // draw_sphere_wires(particle.position, spacing / 8., None, color);
         draw_sphere(particle.position, spacing / 8., None, color);
-    }
+    });
     next_frame().await;
     std::time::Instant::now()
 }

@@ -75,6 +75,10 @@ impl Space {
         self.table.values().flatten()
     }
 
+    pub fn par_particles(&self) -> impl ParallelIterator<Item = &Particle> {
+        self.table.par_iter().flat_map(|(_, v)| v.par_iter())
+    }
+
     pub fn particles_mut(&mut self) -> impl Iterator<Item = &mut Particle> {
         self.table.values_mut().flatten()
     }
@@ -94,6 +98,15 @@ impl Space {
         self.neighbour_by_key(&key, radius)
     }
 
+    pub fn par_neighbour(
+        &self,
+        particle: &Particle,
+        radius: f32,
+    ) -> impl ParallelIterator<Item = &Particle> + Clone {
+        let key = hash(self.grid_size, particle);
+        self.par_neighbour_by_key(&key, radius)
+    }
+
     fn neighbour_by_key(&self, key: &Key, radius: f32) -> impl Iterator<Item = &Particle> + Clone {
         let r: i32 = (radius / self.grid_size).ceil() as i32;
         let x = key[0] - r..=key[0] + r;
@@ -103,6 +116,22 @@ impl Space {
             .map(move |v| [v.0, v.1, v.2])
             .filter_map(|index| self.table.get(&index))
             .flatten()
+    }
+
+    fn par_neighbour_by_key(
+        &self,
+        key: &Key,
+        radius: f32,
+    ) -> impl ParallelIterator<Item = &Particle> + Clone {
+        let r: i32 = (radius / self.grid_size).ceil() as i32;
+        let x = key[0] - r..=key[0] + r;
+        let y = key[1] - r..=key[1] + r;
+        let z = key[2] - r..=key[2] + r;
+        iproduct!(x, y, z)
+            .map(move |v| [v.0, v.1, v.2])
+            .filter_map(|index| self.table.get(&index))
+            .par_bridge()
+            .flat_map(|v| v.par_iter())
     }
 
     pub fn count(&self) -> usize {

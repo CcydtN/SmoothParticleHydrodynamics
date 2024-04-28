@@ -26,25 +26,20 @@ impl<T: kernel::Kernel + Sync + Send> BeakerTeschner07<T> {
                 let kernel = T::new(a.kernel_radius);
                 let others = space.neighbour(a, kernel.support_radius());
 
-                let sum = others.clone().fold(Vec3::ZERO, |acc, b| {
+                let mut sum = Vec3::ZERO;
+                let mut color_field_gradient = Vec3::ZERO;
+                let mut color_field_laplacian = Vec3::ZERO;
+                others.for_each(|b| {
                     let r = a.position - b.position;
-                    acc + b.mass * kernel.function(r) * r
-                });
-
-                let color_field_gradient = others.clone().fold(Vec3::ZERO, |acc, b| {
-                    let r = a.position - b.position;
-                    acc + b.mass * kernel.gradient(r) / b.density
-                });
-
-                let color_field_laplacian = others.clone().fold(Vec3::ZERO, |acc, b| {
-                    let r = a.position - b.position;
-                    acc + b.mass * kernel.gradient(r) / b.density
+                    sum += b.mass * kernel.function(r) * r;
+                    color_field_gradient += b.mass * kernel.gradient(r) / b.density;
+                    color_field_laplacian += b.mass * kernel.laplacian(r) / b.density;
                 });
 
                 let kappa = -color_field_laplacian.length_squared() / color_field_gradient.length();
                 kappa / a.mass * sum
             })
-            .collect_vec()
+            .collect::<Vec<_>>()
     }
 }
 

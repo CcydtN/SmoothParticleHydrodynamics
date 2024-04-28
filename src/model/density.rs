@@ -4,6 +4,7 @@ use crate::kernel;
 use crate::util_3d::*;
 use itertools::Itertools;
 use macroquad::prelude::*;
+use rayon::prelude::*;
 
 #[derive(Debug)]
 pub(crate) struct Density<T: kernel::Kernel> {
@@ -30,7 +31,7 @@ impl<T: kernel::Kernel> Density<T> {
                     })
                     .sum::<f32>()
             })
-            .collect_vec();
+            .collect::<Vec<_>>();
 
         space
             .particles_mut()

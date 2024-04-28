@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use itertools::Itertools;
 use macroquad::prelude::*;
+use rayon::prelude::*;
 
 use crate::kernel;
 use crate::util_3d::*;
@@ -12,7 +13,7 @@ pub struct Artificial<T: kernel::Kernel> {
     _kernel: PhantomData<T>,
 }
 
-impl<T: kernel::Kernel> Artificial<T> {
+impl<T: kernel::Kernel + Sync + Send> Artificial<T> {
     pub fn new(alpha: f32, speed_sound: f32) -> Self {
         assert!(speed_sound > 0.0);
         // alpha between 0.08 and 0.5
@@ -33,19 +34,20 @@ impl<T: kernel::Kernel> Artificial<T> {
                     .map(|b| {
                         let r = a.position - b.position;
                         let v = a.velocity - b.velocity;
-                        if r.dot(v) >= 0. {
+                        let numerator = r.dot(v);
+                        if numerator >= 0. {
                             return Vec3::ZERO;
                         }
                         let h = (a.kernel_radius + b.kernel_radius) / 2.;
-                        let numerator = r.dot(v);
                         let denominator = r.length_squared() + 0.01 * h.powi(2);
                         let constant =
-                            (2. * self.alpha * h * self.speed_sound) / (a.density + b.density);
+                            -(2. * self.alpha * h * self.speed_sound) / (a.density + b.density);
                         b.mass * kernel.gradient(r) * constant * numerator / denominator
                     })
                     .fold(Vec3::ZERO, |a, b| a + b)
+                    * -1.
             })
-            .collect_vec()
+            .collect::<Vec<_>>()
     }
 }
 
@@ -57,7 +59,6 @@ mod tests {
     #[test]
     fn direction_check() {
         let h = 5.;
-        let kernel = CubicSpline::new(h);
         let mass = 1.;
         let speed_sound = 10. * ((2. * 9.81 * 0.5) as f32).sqrt();
 
