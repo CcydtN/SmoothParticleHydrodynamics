@@ -13,7 +13,6 @@ pub struct Space {
     grid_size: f32,
     table: HashMap<Key, Vec<Particle>>,
     update_count: usize,
-    particle_count: usize,
 }
 
 #[inline]
@@ -27,7 +26,6 @@ impl Space {
             grid_size,
             ..Default::default()
         };
-        obj.particle_count += particles.len();
         obj.table = particles
             .into_iter()
             .into_group_map_by(|v| hash(grid_size, v));
@@ -35,21 +33,17 @@ impl Space {
     }
 
     #[inline]
-    fn add(&mut self, particle: Particle) {
-        let key = hash(self.grid_size, &particle);
-        self.table.entry(key).or_default().push(particle)
-    }
-
-    #[inline]
     pub fn add_one(&mut self, particle: Particle) {
-        self.particle_count += 1;
-        self.add(particle);
+        {
+            let this = &mut *self;
+            let key = hash(this.grid_size, &particle);
+            this.table.entry(key).or_default().push(particle)
+        };
     }
 
     #[inline]
     pub fn add_bulk(&mut self, particles: Vec<Particle>) {
-        self.particle_count += particles.len();
-        particles.into_iter().for_each(|p| self.add(p))
+        particles.into_iter().for_each(|p| self.add_one(p))
     }
 
     pub fn update(&mut self) {
@@ -61,7 +55,6 @@ impl Space {
             dropped.append(&mut drop);
         });
 
-        self.particle_count -= dropped.len();
         self.add_bulk(dropped);
 
         self.update_count += 1;
@@ -132,10 +125,6 @@ impl Space {
             .filter_map(|index| self.table.get(&index))
             .par_bridge()
             .flat_map(|v| v.par_iter())
-    }
-
-    pub fn count(&self) -> usize {
-        self.particle_count
     }
 }
 

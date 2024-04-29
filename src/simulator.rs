@@ -62,7 +62,8 @@ impl Simulator {
             default_kernel_radius,
         );
 
-        let speed_of_sound = f32::sqrt(200. * gravity * spacing * particle_per_side as f32 / 2.);
+        let speed_of_sound =
+            10. * f32::sqrt(2. * gravity * spacing * particle_per_side as f32 / 2.);
         let alpha = 0.08;
 
         let space = Space::new(default_kernel_radius, particles);
