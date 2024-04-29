@@ -14,16 +14,26 @@ A repo to store my learning/implementation of SPH.
   - 2D simulation to play around
 - [X] Replicate the result of of [this paper](http://cg.informatik.uni-freiburg.de/publications/2007_SCA_SPH.pdf)
   - 3D simultion of a drop in zero-gravity scenario
-- [ ] Find and fix performance issue
-  - WIP
-  - Evaluate with perf?
-- [ ] Dynamic kernel radius implementation
+- [X] Dynamic kernel radius implementation
   - "Resolution varying in space and time" (Page 1722) @ [here](https://sci-hub.se/https://iopscience.iop.org/article/10.1088/0034-4885/68/8/R01)
+  - [ ] Way too slow, (probably bad neighbour seach impl, and some others factor)
+    - [ ] Spatial hash grid
+    - [ ] kd-tree
+    - [ ] Get rid of the dynamic kernel
+    - [ ] Others... (doing research...)
+- [ ] Find and fix performance issue
+  - should be done after every milestone
+  - Evaluate with perf, and flamegraph
+    - [X] Cargo profile
+    - [X] Command expample (done: at the "justfile")
 - [ ] Boundary condition
+  - [ ] Simple: when ever a particle touch a surface, move its' location to the boundary and reflect the velocity by the normal.
+  - [ ] Complex: Boundary particle.
 - [ ] Heat conduction
   - Maybe drop hot water on ice
   - Or ice drop in hot water
 - [ ] Parallel computation
+  - Probably with rayon
 
 
 ## Reference
