@@ -18,7 +18,7 @@ A repo to store my learning/implementation of SPH.
   - "Resolution varying in space and time" (Page 1722) @ [here](https://sci-hub.se/https://iopscience.iop.org/article/10.1088/0034-4885/68/8/R01)
   - [ ] Way too slow, (probably bad neighbour seach impl, and some others factor)
     - [ ] Spatial hash grid
-    - [ ] kd-tree
+    - [ ] ~kd-tree~ [Reason](https://arxiv.org/pdf/1309.3783) (3 reason is suggested at "II. Algorithm")
     - [ ] Get rid of the dynamic kernel
     - [ ] Others... (doing research...)
 - [ ] Find and fix performance issue
